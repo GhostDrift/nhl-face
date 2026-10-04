@@ -1,0 +1,33 @@
+{
+    "displayName": "nhl-face",
+    "uuid": "c302f985-dcbe-4a13-beff-605e512ac508",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+        "aplite",
+        "basalt",
+        "chalk",
+        "diorite",
+        "emery",
+        "flint",
+        "gabbro"
+    ],
+    "watchapp": {
+        "watchface": false
+    },
+    "messageKeys": {
+        "dummy": 10000
+    },
+    "resources": {
+        "media": []
+    },
+    "name": "nhl-face",
+    "shortName": "nhl-face",
+    "longName": "nhl-face",
+    "versionLabel": "1.0.0",
+    "companyName": "MakeAwesomeHappen",
+    "appKeys": {
+        "dummy": 10000
+    },
+    "capabilities": []
+}
