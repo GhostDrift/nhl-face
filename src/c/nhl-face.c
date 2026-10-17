@@ -34,6 +34,7 @@ static FaceData s_data;
 static int s_refresh_countdown;
 static char s_time_buf[8];
 static char s_date_buf[16];
+static bool s_quiet_time;
 static char s_next1_buf[24];
 static char s_next2_buf[32];
 
@@ -167,6 +168,18 @@ static void prv_draw_bubble(GContext *ctx, GRect rect, const char *label, Font l
                 in.size.w, fg);
 }
 
+// A crescent moon on a small tab, set into a pinstripe to show Quiet Time is on.
+static void prv_draw_quiet_tab(GContext *ctx, GPoint center, int r, GColor tab, GColor fg) {
+  graphics_context_set_fill_color(ctx, tab);
+  graphics_fill_rect(ctx, GRect(center.x - r - 4, center.y - r - 1, 2 * r + 8, 2 * r + 3), 3, GCornersAll);
+  graphics_context_set_fill_color(ctx, fg);
+  graphics_fill_circle(ctx, center, r);
+  // Carve the crescent with a slightly smaller circle, offset so it stays inside
+  // the tab: its top reaches the tab's top edge (r + 1 above center) and no further.
+  graphics_context_set_fill_color(ctx, tab);
+  graphics_fill_circle(ctx, GPoint(center.x + r / 2, center.y - 2), r - 1);
+}
+
 // A block with a border band in one color around a panel in another, and a
 // pinstripe running inside the band, inset pixels in from the edge and band
 // pixels out from the panel.
@@ -225,6 +238,10 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
   const int time_bottom = watch_in.origin.y + watch_in.size.h - 1 - band;
   prv_draw_caps(ctx, s_time_buf, time_font, watch_in.origin.x,
                 time_top + (time_bottom - time_top - time_font.cap_h + 1) / 2, watch_in.size.w, panel_fg);
+  if (s_quiet_time) {
+    prv_draw_quiet_tab(ctx, GPoint(watch_in.origin.x + watch_in.size.w / 2, watch_in.origin.y + watch_in.size.h - 1),
+                       big ? 6 : 4, accent, accent_fg);
+  }
 
   // Game: live score, final score, or next game
   const char *line1 = s_data.line1;
@@ -285,6 +302,8 @@ static void prv_update_time(void) {
   }
   strftime(s_date_buf, sizeof(s_date_buf), "%a %b %e", t);
   prv_upcase(s_date_buf);
+  // There's no Quiet Time event, so check it each minute along with the time.
+  s_quiet_time = quiet_time_is_active();
   layer_mark_dirty(s_canvas);
 }
 
