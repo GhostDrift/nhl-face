@@ -9,6 +9,8 @@ var API = 'https://api-web.nhle.com/v1';
 var STATE_NONE = 0, STATE_NEXT = 1, STATE_LIVE = 2, STATE_FINAL = 3;
 // What the watch should buzz for, besides goals.
 var BUZZ_PERIOD = 1, BUZZ_FINAL = 2;
+// Which team a goal buzz is for.
+var GOAL_MINE = 1, GOAL_OPP = 2;
 // Game stages, in order: before puck drop, then each period in play (odd) and the
 // intermission after it (even), then final.
 var STAGE_PREGAME = 0, STAGE_FINAL = 99;
@@ -197,16 +199,32 @@ function buildStandingsFields(team, standings) {
   return msg;
 }
 
-// How many goals the team scored in this game since the last check. The first look
-// at a game only records its score, so joining mid-game doesn't count.
-function teamScored(team, game) {
-  if (!game) return 0;
-  var side = game.homeTeam.abbrev === team ? game.homeTeam : game.awayTeam;
-  var score = side.score || 0;
+// How many goals the team (mine) and its opponent (opp) scored in this game since
+// the last check. The first look at a game only records its score, so joining
+// mid-game doesn't count.
+function goalsScored(team, game) {
+  var none = { mine: 0, opp: 0 };
+  if (!game) return none;
+  var home = game.homeTeam.abbrev === team;
+  var mine = (home ? game.homeTeam : game.awayTeam).score || 0;
+  var opp = (home ? game.awayTeam : game.homeTeam).score || 0;
   var last = null;
   try { last = JSON.parse(localStorage.getItem('lastScore')); } catch (e) {}
-  localStorage.setItem('lastScore', JSON.stringify({ id: game.id, score: score }));
-  return last && last.id === game.id && score > last.score ? score - last.score : 0;
+  localStorage.setItem('lastScore', JSON.stringify({ id: game.id, score: mine, opp: opp }));
+  if (!last || last.id !== game.id) return none;
+  return {
+    mine: Math.max(mine - last.score, 0),
+    // Scores saved before the opponent's was tracked don't have it.
+    opp: last.opp === undefined ? 0 : Math.max(opp - last.opp, 0)
+  };
+}
+
+// Which goals to buzz for: 'off', 'mine', or 'both'.
+function goalVibe() {
+  var mode = localStorage.getItem('goalVibe');
+  if (mode) return mode;
+  // Before the opponent option, this was an on/off setting for the team's goals.
+  return localStorage.getItem('vibeOnGoal') === '1' ? 'mine' : 'off';
 }
 
 function abbrevOf(team) {
@@ -331,8 +349,14 @@ function stageBuzz(picked, liveScore) {
 function gameEvents(team, picked, liveScore, msg) {
   // Include the just-finished game so a game-ending goal still counts.
   var game = picked.live || picked.recent;
-  var scored = teamScored(team, liveScore || game);
-  if (scored && localStorage.getItem('vibeOnGoal') === '1') msg[keys.GoalScored] = 1;
+  var goals = goalsScored(team, liveScore || game);
+  var scored = goals.mine;
+  var vibe = goalVibe();
+  if (scored && vibe !== 'off') {
+    msg[keys.GoalScored] = GOAL_MINE;
+  } else if (goals.opp && vibe === 'both') {
+    msg[keys.GoalScored] = GOAL_OPP;
+  }
   var alert = goalAlert();
   if (scored && alert === 'notify') {
     if (liveScore && liveScore.goals) {
@@ -356,7 +380,7 @@ function gameEvents(team, picked, liveScore, msg) {
       (buzz === BUZZ_FINAL && localStorage.getItem('vibeOnFinal') === '1')) {
     msg[keys.GameBuzz] = buzz;
   }
-  return scored > 0 || rescored || buzz !== 0;
+  return scored > 0 || goals.opp > 0 || rescored || buzz !== 0;
 }
 
 // The live game being polled between regular updates, if any.
@@ -474,7 +498,8 @@ Pebble.addEventListener('webviewclosed', function(e) {
   var team = settings[keys.ConfigTeam];
   if (teams[team]) localStorage.setItem('team', team);
   localStorage.setItem('awayColors', settings[keys.ConfigAwayColors] ? '1' : '0');
-  localStorage.setItem('vibeOnGoal', settings[keys.ConfigVibeOnGoal] ? '1' : '0');
+  var vibe = settings[keys.ConfigVibeOnGoal];
+  localStorage.setItem('goalVibe', vibe === 'mine' || vibe === 'both' ? vibe : 'off');
   var alert = settings[keys.ConfigGoalNotify];
   localStorage.setItem('goalAlert', alert === 'notify' || alert === 'banner' ? alert : 'off');
   localStorage.setItem('bannerSecs', String(parseInt(settings[keys.ConfigBannerSecs], 10) || GOAL_BANNER_SECS));

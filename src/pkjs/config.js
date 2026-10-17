@@ -34,11 +34,16 @@ module.exports = [
         defaultValue: true
       },
       {
-        type: 'toggle',
+        type: 'select',
         messageKey: 'ConfigVibeOnGoal',
-        label: 'Vibrate when your team scores',
-        description: 'Checked every 20 seconds during games. Skipped while Quiet Time is on.',
-        defaultValue: false
+        label: 'Vibrate on goals',
+        description: 'Short-short-long for your team, three quick buzzes for the other team. Checked every 20 seconds during games. Skipped while Quiet Time is on.',
+        defaultValue: 'off',
+        options: [
+          { label: 'Off', value: 'off' },
+          { label: 'Only my team', value: 'mine' },
+          { label: 'Both teams', value: 'both' }
+        ]
       },
       {
         type: 'select',
