@@ -50,7 +50,13 @@
       "RequestUpdate",
       "VibeOnDisconnect",
       "GoalScored",
-      "GameBuzz"
+      "GameBuzz",
+      "GoalScorer",
+      "GoalAssists",
+      "GoalTime",
+      "GoalScore",
+      "GoalBannerSecs",
+      "ConfigBannerSecs"
     ],
     "resources": {
       "media": []

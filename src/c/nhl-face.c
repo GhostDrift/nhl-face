@@ -42,6 +42,16 @@ static bool s_vibe_on_disconnect;
 static char s_next1_buf[24];
 static char s_next2_buf[32];
 
+// How long the goal banner covers the NHL block, unless the phone says otherwise.
+#define GOAL_BANNER_SECS 30
+
+// The team's latest goal, shown in a banner over the NHL block while s_banner_timer runs.
+static AppTimer *s_banner_timer;
+static char s_goal_scorer[32];
+static char s_goal_assists[64];
+static char s_goal_time[24];
+static char s_goal_score[24];
+
 static GColor prv_color(int32_t hex, GColor bw) {
   return PBL_IF_COLOR_ELSE(GColorFromHEX(hex), bw);
 }
@@ -222,6 +232,48 @@ static void prv_draw_block(GContext *ctx, GRect rect, int inset, int band, GColo
   graphics_draw_round_rect(ctx, line, 5);
 }
 
+// One line of the goal banner, which may wrap onto up to max_lines lines.
+typedef struct {
+  const char *text;
+  const char *font_key;
+  int max_lines;
+  int line_h;
+} BannerLine;
+
+// The team's latest goal: GOAL!, the scorer, assists, period and time, and the
+// score, spaced evenly down rect.
+static void prv_draw_goal_banner(GContext *ctx, GRect rect, bool big, GColor fg) {
+  const BannerLine lines[] = {
+    { "GOAL!", big ? FONT_KEY_GOTHIC_28_BOLD : FONT_KEY_GOTHIC_24_BOLD, 1, big ? 28 : 24 },
+    { s_goal_scorer, big ? FONT_KEY_GOTHIC_24_BOLD : FONT_KEY_GOTHIC_18_BOLD, 1, big ? 24 : 18 },
+    { s_goal_assists, big ? FONT_KEY_GOTHIC_18 : FONT_KEY_GOTHIC_14, 2, big ? 18 : 14 },
+    { s_goal_time, big ? FONT_KEY_GOTHIC_18_BOLD : FONT_KEY_GOTHIC_14_BOLD, 1, big ? 18 : 14 },
+    { s_goal_score, big ? FONT_KEY_GOTHIC_24_BOLD : FONT_KEY_GOTHIC_18_BOLD, 1, big ? 24 : 18 },
+  };
+  const int n = ARRAY_LENGTH(lines);
+  int heights[ARRAY_LENGTH(lines)];
+  int total = 0;
+  for (int i = 0; i < n; i++) {
+    // Room for the font's descenders below the last line.
+    GRect box = GRect(0, 0, rect.size.w, lines[i].max_lines * lines[i].line_h + lines[i].line_h / 3);
+    heights[i] = graphics_text_layout_get_content_size(lines[i].text, fonts_get_system_font(lines[i].font_key),
+                                                       box, GTextOverflowModeTrailingEllipsis,
+                                                       GTextAlignmentCenter).h;
+    total += heights[i];
+  }
+  const int spare = rect.size.h - total;
+  const int space = spare > 0 ? spare / (n + 1) : 0;
+  int y = rect.origin.y + (spare > 0 ? (spare - space * (n - 1)) / 2 : 0);
+  graphics_context_set_text_color(ctx, fg);
+  for (int i = 0; i < n; i++) {
+    // Gothic text sits a few pixels below the top of its box.
+    graphics_draw_text(ctx, lines[i].text, fonts_get_system_font(lines[i].font_key),
+                       GRect(rect.origin.x, y - lines[i].line_h / 6, rect.size.w, heights[i] + 4),
+                       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+    y += heights[i] + space;
+  }
+}
+
 static void prv_canvas_update(Layer *layer, GContext *ctx) {
   GRect b = layer_get_bounds(layer);
   const int w = b.size.w;
@@ -293,10 +345,20 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
     line2 = "SCHEDULED";
   }
 
-  // Team name set into the NHL block's top pinstripe.
   GRect inner = grect_inset(nhl, GEdgeInsets(inset));
+  if (s_banner_timer) {
+    // The goal banner fills everything inside the pinstripe, under the team name.
+    graphics_context_set_fill_color(ctx, accent);
+    graphics_fill_rect(ctx, grect_inset(inner, GEdgeInsets(1)), 4, GCornersAll);
+    const int top = inner.origin.y + label_half + 1;
+    prv_draw_goal_banner(ctx, GRect(inner.origin.x + 4, top, inner.size.w - 8, inner.origin.y + inner.size.h - 2 - top),
+                         big, accent_fg);
+  }
+
+  // Team name set into the NHL block's top pinstripe.
   prv_draw_stripe_label(ctx, s_data.team_name, label_font, inner.origin.x + 8, inner.origin.y,
                         inner.size.w - 16, true, accent, accent_fg);
+  if (s_banner_timer) return;
 
   // Three rows of bubbles spaced evenly below the team name:
   // the game, then RECORD | PTS, then division | NHL.
@@ -377,6 +439,32 @@ static void prv_copy_int(int32_t *dest, Tuple *t) {
   if (t) *dest = t->value->int32;
 }
 
+static void prv_banner_timeout(void *context) {
+  s_banner_timer = NULL;
+  layer_mark_dirty(s_canvas);
+}
+
+// Shows the goal banner if the phone sent one, restarting its timer. A score
+// sent on its own updates the banner already up.
+static void prv_show_goal_banner(DictionaryIterator *iter) {
+  Tuple *scorer = dict_find(iter, MESSAGE_KEY_GoalScorer);
+  if (!scorer) {
+    if (s_banner_timer) prv_copy_string(s_goal_score, sizeof(s_goal_score), dict_find(iter, MESSAGE_KEY_GoalScore));
+    return;
+  }
+  prv_copy_string(s_goal_scorer, sizeof(s_goal_scorer), scorer);
+  prv_copy_string(s_goal_assists, sizeof(s_goal_assists), dict_find(iter, MESSAGE_KEY_GoalAssists));
+  prv_copy_string(s_goal_time, sizeof(s_goal_time), dict_find(iter, MESSAGE_KEY_GoalTime));
+  prv_copy_string(s_goal_score, sizeof(s_goal_score), dict_find(iter, MESSAGE_KEY_GoalScore));
+  int32_t secs = GOAL_BANNER_SECS;
+  prv_copy_int(&secs, dict_find(iter, MESSAGE_KEY_GoalBannerSecs));
+  const uint32_t ms = (secs > 0 ? secs : GOAL_BANNER_SECS) * 1000;
+  if (!s_banner_timer || !app_timer_reschedule(s_banner_timer, ms)) {
+    s_banner_timer = app_timer_register(ms, prv_banner_timeout, NULL);
+  }
+  if (!quiet_time_is_active()) light_enable_interaction();
+}
+
 static void prv_inbox_received(DictionaryIterator *iter, void *context) {
   prv_copy_string(s_data.team_name, sizeof(s_data.team_name), dict_find(iter, MESSAGE_KEY_TeamName));
   prv_copy_int(&s_data.primary, dict_find(iter, MESSAGE_KEY_ColorPrimary));
@@ -406,6 +494,7 @@ static void prv_inbox_received(DictionaryIterator *iter, void *context) {
       vibes_long_pulse();
     }
   }
+  prv_show_goal_banner(iter);
   Tuple *vibe = dict_find(iter, MESSAGE_KEY_VibeOnDisconnect);
   if (vibe) {
     s_vibe_on_disconnect = vibe->value->int32 != 0;

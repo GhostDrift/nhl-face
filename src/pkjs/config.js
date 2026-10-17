@@ -41,11 +41,30 @@ module.exports = [
         defaultValue: false
       },
       {
-        type: 'toggle',
+        type: 'select',
         messageKey: 'ConfigGoalNotify',
-        label: 'Goal notifications',
-        description: 'A notification with the scorer, assists, and score when your team scores.',
-        defaultValue: false
+        label: 'Goal alerts',
+        description: 'The scorer, assists, and score when your team scores, as a phone notification or as a banner on the face.',
+        defaultValue: 'off',
+        options: [
+          { label: 'Off', value: 'off' },
+          { label: 'Phone notification', value: 'notify' },
+          { label: 'Banner on the watch face', value: 'banner' }
+        ]
+      },
+      {
+        type: 'select',
+        messageKey: 'ConfigBannerSecs',
+        label: 'Banner duration',
+        description: 'How long the goal banner stays up.',
+        defaultValue: '30',
+        options: [
+          { label: '15 seconds', value: '15' },
+          { label: '30 seconds', value: '30' },
+          { label: '1 minute', value: '60' },
+          { label: '2 minutes', value: '120' },
+          { label: '5 minutes', value: '300' }
+        ]
       },
       {
         type: 'toggle',

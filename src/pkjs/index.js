@@ -16,6 +16,8 @@ var STAGE_PREGAME = 0, STAGE_FINAL = 99;
 // once-a-minute updates. The NHL feed is cached for about this long, so faster
 // polling would just fetch the same data again.
 var LIVE_POLL_MS = 20 * 1000;
+// How long the watch shows the goal banner unless set otherwise.
+var GOAL_BANNER_SECS = 30;
 // Show a finished game's final score until this long after puck drop.
 var FINAL_WINDOW_MS = 6 * 60 * 60 * 1000;
 
@@ -211,27 +213,77 @@ function abbrevOf(team) {
   return typeof team === 'string' ? team : team && team['default'];
 }
 
-// Notification title and body for one goal from the scoreboard's goal list.
-function goalNotification(game, goal) {
+// The parts of one goal from the scoreboard's goal list, for a notification or banner.
+function goalParts(game, goal) {
   var tags = [];
   if (goal.strength === 'pp') tags.push('PP');
   if (goal.strength === 'sh') tags.push('SH');
   if (goal.goalModifier === 'empty-net') tags.push('EN');
   var assists = (goal.assists || []).map(function(a) { return a.name['default']; });
-  var body = goal.name['default'] + (assists.length ? ' (' + assists.join(', ') + ')' : ' (unassisted)') +
-             '\n' + periodLabel(goal.periodDescriptor) + ' ' + goal.timeInPeriod +
-             (tags.length ? ' ' + tags.join(' ') : '') +
-             '\n' + game.awayTeam.abbrev + ' ' + goal.awayScore + '  @  ' + game.homeTeam.abbrev + ' ' + goal.homeScore;
-  return { title: abbrevOf(goal.teamAbbrev) + ' GOAL!', body: body };
+  return {
+    team: abbrevOf(goal.teamAbbrev),
+    scorer: goal.name['default'],
+    assists: assists.length ? assists.join(', ') : 'Unassisted',
+    time: periodLabel(goal.periodDescriptor) + ' ' + goal.timeInPeriod + (tags.length ? ' ' + tags.join(' ') : ''),
+    score: bannerScore(game, goal.awayScore, goal.homeScore)
+  };
+}
+
+function bannerScore(game, away, home) {
+  return game.awayTeam.abbrev + ' ' + away + '  @  ' + game.homeTeam.abbrev + ' ' + home;
+}
+
+// The team's last count goals in the game.
+function teamGoals(team, game, count) {
+  var mine = (game.goals || []).filter(function(g) { return abbrevOf(g.teamAbbrev) === team; });
+  return mine.slice(-count);
 }
 
 // Shows a notification for each of the team's last count goals in the game.
 function notifyGoals(team, game, count) {
-  var mine = (game.goals || []).filter(function(g) { return abbrevOf(g.teamAbbrev) === team; });
-  mine.slice(-count).forEach(function(goal) {
-    var n = goalNotification(game, goal);
-    Pebble.showSimpleNotificationOnPebble(n.title, n.body);
+  teamGoals(team, game, count).forEach(function(goal) {
+    var g = goalParts(game, goal);
+    var assists = g.assists === 'Unassisted' ? ' (unassisted)' : ' (' + g.assists + ')';
+    Pebble.showSimpleNotificationOnPebble(g.team + ' GOAL!', g.scorer + assists + '\n' + g.time + '\n' + g.score);
   });
+}
+
+// Adds the banner fields for the team's latest goal in the game to msg. Returns
+// false if the goal isn't in the game's goal list yet.
+function addGoalBanner(team, game, msg) {
+  var goal = teamGoals(team, game, 1)[0];
+  if (!goal) return false;
+  var g = goalParts(game, goal);
+  msg[keys.GoalScorer] = g.scorer;
+  msg[keys.GoalAssists] = g.assists;
+  msg[keys.GoalTime] = g.time;
+  msg[keys.GoalScore] = g.score;
+  var secs = parseInt(localStorage.getItem('bannerSecs'), 10) || GOAL_BANNER_SECS;
+  msg[keys.GoalBannerSecs] = secs;
+  localStorage.setItem('goalBanner', JSON.stringify({ id: game.id, score: g.score, until: Date.now() + secs * 1000 }));
+  return true;
+}
+
+// Adds the game's current score to msg if it changed while the goal banner is up,
+// such as the other team scoring right after. Returns true if it did.
+function updateGoalBanner(game, msg) {
+  var banner = null;
+  try { banner = JSON.parse(localStorage.getItem('goalBanner')); } catch (e) {}
+  if (!game || !banner || banner.id !== game.id || Date.now() > banner.until) return false;
+  var score = scoreLine(game);
+  if (score === banner.score) return false;
+  banner.score = score;
+  localStorage.setItem('goalBanner', JSON.stringify(banner));
+  msg[keys.GoalScore] = score;
+  return true;
+}
+
+// How to show the team's goals: 'off', 'notify', or 'banner'.
+function goalAlert() {
+  var mode = localStorage.getItem('goalAlert');
+  if (mode) return mode;
+  // Before the banner, this was an on/off notification setting.
+  return localStorage.getItem('goalNotify') === '1' ? 'notify' : 'off';
 }
 
 // Calls back with the scoreboard entry, including its goal list, for a game.
@@ -281,7 +333,8 @@ function gameEvents(team, picked, liveScore, msg) {
   var game = picked.live || picked.recent;
   var scored = teamScored(team, liveScore || game);
   if (scored && localStorage.getItem('vibeOnGoal') === '1') msg[keys.GoalScored] = 1;
-  if (scored && localStorage.getItem('goalNotify') === '1') {
+  var alert = goalAlert();
+  if (scored && alert === 'notify') {
     if (liveScore && liveScore.goals) {
       notifyGoals(team, liveScore, scored);
     } else {
@@ -289,13 +342,21 @@ function gameEvents(team, picked, liveScore, msg) {
         if (found) notifyGoals(team, found, scored);
       });
     }
+  } else if (scored && alert === 'banner') {
+    if (!liveScore || !addGoalBanner(team, liveScore, msg)) {
+      getScoreboardGame(game, function(found) {
+        var banner = {};
+        if (found && addGoalBanner(team, found, banner)) sendToWatch(banner);
+      });
+    }
   }
+  var rescored = !scored && alert === 'banner' && updateGoalBanner(liveScore || game, msg);
   var buzz = stageBuzz(picked, liveScore);
   if ((buzz === BUZZ_PERIOD && localStorage.getItem('vibeOnPeriod') === '1') ||
       (buzz === BUZZ_FINAL && localStorage.getItem('vibeOnFinal') === '1')) {
     msg[keys.GameBuzz] = buzz;
   }
-  return scored > 0 || buzz !== 0;
+  return scored > 0 || rescored || buzz !== 0;
 }
 
 // The live game being polled between regular updates, if any.
@@ -414,7 +475,9 @@ Pebble.addEventListener('webviewclosed', function(e) {
   if (teams[team]) localStorage.setItem('team', team);
   localStorage.setItem('awayColors', settings[keys.ConfigAwayColors] ? '1' : '0');
   localStorage.setItem('vibeOnGoal', settings[keys.ConfigVibeOnGoal] ? '1' : '0');
-  localStorage.setItem('goalNotify', settings[keys.ConfigGoalNotify] ? '1' : '0');
+  var alert = settings[keys.ConfigGoalNotify];
+  localStorage.setItem('goalAlert', alert === 'notify' || alert === 'banner' ? alert : 'off');
+  localStorage.setItem('bannerSecs', String(parseInt(settings[keys.ConfigBannerSecs], 10) || GOAL_BANNER_SECS));
   localStorage.setItem('vibeOnPeriod', settings[keys.ConfigVibeOnPeriod] ? '1' : '0');
   localStorage.setItem('vibeOnFinal', settings[keys.ConfigVibeOnFinal] ? '1' : '0');
   localStorage.setItem('vibeOnDisconnect', settings[keys.VibeOnDisconnect] ? '1' : '0');

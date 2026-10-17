@@ -39,7 +39,13 @@
         "RequestUpdate": 10024,
         "VibeOnDisconnect": 10025,
         "GoalScored": 10026,
-        "GameBuzz": 10027
+        "GameBuzz": 10027,
+        "GoalScorer": 10028,
+        "GoalAssists": 10029,
+        "GoalTime": 10030,
+        "GoalScore": 10031,
+        "GoalBannerSecs": 10032,
+        "ConfigBannerSecs": 10033
     },
     "resources": {
         "media": []
@@ -80,6 +86,12 @@
         "RequestUpdate": 10024,
         "VibeOnDisconnect": 10025,
         "GoalScored": 10026,
-        "GameBuzz": 10027
+        "GameBuzz": 10027,
+        "GoalScorer": 10028,
+        "GoalAssists": 10029,
+        "GoalTime": 10030,
+        "GoalScore": 10031,
+        "GoalBannerSecs": 10032,
+        "ConfigBannerSecs": 10033
     }
 }
