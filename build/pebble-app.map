@@ -83,6 +83,12 @@ Discarded input sections
  .bss           0x00000000        0x0 basalt/src/resource_ids.auto.c.25.o
  .text          0x00000000        0x0 src/message_keys.auto.c.25.o
  .bss           0x00000000        0x0 src/message_keys.auto.c.25.o
+ .data.MESSAGE_KEY_ConfigVibeOnPeriod
+                0x00000000        0x4 src/message_keys.auto.c.25.o
+ .data.MESSAGE_KEY_ConfigVibeOnGoal
+                0x00000000        0x4 src/message_keys.auto.c.25.o
+ .data.MESSAGE_KEY_ConfigVibeOnFinal
+                0x00000000        0x4 src/message_keys.auto.c.25.o
  .data.MESSAGE_KEY_ConfigTeam
                 0x00000000        0x4 src/message_keys.auto.c.25.o
  .data.MESSAGE_KEY_ConfigAwayColors
@@ -532,10 +538,6 @@ Discarded input sections
  .text.time_ms_deprecated
                 0x00000000        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
  .text.vibes_cancel
-                0x00000000        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
- .text.vibes_enqueue_custom_pattern
-                0x00000000        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
- .text.vibes_long_pulse
                 0x00000000        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
  .text.vibes_short_pulse
                 0x00000000        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
@@ -1433,7 +1435,7 @@ LOAD /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/b
  .note.gnu.build-id
                 0x00000084       0x24 linker stubs
 
-.text           0x000000a8     0x145d
+.text           0x000000a8     0x1504
  *(.text)
  .text          0x000000a8       0x14 /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
  *(.text.*)
@@ -1456,355 +1458,372 @@ LOAD /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/b
  .text.prv_copy_string
                 0x000002a2       0x1a src/c/nhl-face.c.25.o
  .text.prv_inbox_received
-                0x000002bc      0x284 src/c/nhl-face.c.25.o
+                0x000002bc      0x2f0 src/c/nhl-face.c.25.o
  .text.prv_tick_handler
-                0x00000540       0x48 src/c/nhl-face.c.25.o
+                0x000005ac       0x48 src/c/nhl-face.c.25.o
  .text.prv_draw_block.constprop.0
-                0x00000588       0xba src/c/nhl-face.c.25.o
+                0x000005f4       0xba src/c/nhl-face.c.25.o
  .text.prv_draw_stripe_label.constprop.0
-                0x00000642       0xd6 src/c/nhl-face.c.25.o
+                0x000006ae       0xd6 src/c/nhl-face.c.25.o
  .text.prv_color.isra.0
-                0x00000718       0x1a src/c/nhl-face.c.25.o
+                0x00000784       0x1a src/c/nhl-face.c.25.o
  .text.prv_draw_bubble
-                0x00000732       0xe4 src/c/nhl-face.c.25.o
- *fill*         0x00000816        0x2 
+                0x0000079e       0xe4 src/c/nhl-face.c.25.o
+ *fill*         0x00000882        0x2 
  .text.prv_canvas_update
-                0x00000818      0x868 src/c/nhl-face.c.25.o
+                0x00000884      0x868 src/c/nhl-face.c.25.o
  .text.startup.main
-                0x00001080      0x110 src/c/nhl-face.c.25.o
-                0x00001080                main
+                0x000010ec      0x110 src/c/nhl-face.c.25.o
+                0x000010ec                main
  .text.app_event_loop
-                0x00001190        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001190                app_event_loop
- .text.app_message_open
-                0x0000119c        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x0000119c                app_message_open
- .text.clock_is_24h_style
-                0x000011a8        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000011a8                clock_is_24h_style
- .text.dict_find
-                0x000011b4        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000011b4                dict_find
- .text.dict_write_uint8
-                0x000011c0        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000011c0                dict_write_uint8
- .text.fonts_get_system_font
-                0x000011cc        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000011cc                fonts_get_system_font
- .text.graphics_draw_line
-                0x000011d8        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000011d8                graphics_draw_line
- .text.graphics_draw_round_rect
-                0x000011e4        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000011e4                graphics_draw_round_rect
- .text.graphics_fill_circle
-                0x000011f0        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000011f0                graphics_fill_circle
- .text.graphics_fill_rect
                 0x000011fc        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000011fc                graphics_fill_rect
- .text.layer_add_child
+                0x000011fc                app_event_loop
+ .text.app_message_open
                 0x00001208        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001208                layer_add_child
- .text.layer_create
+                0x00001208                app_message_open
+ .text.clock_is_24h_style
                 0x00001214        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001214                layer_create
- .text.layer_destroy
+                0x00001214                clock_is_24h_style
+ .text.dict_find
                 0x00001220        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001220                layer_destroy
- .text.layer_get_bounds
+                0x00001220                dict_find
+ .text.dict_write_uint8
                 0x0000122c        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x0000122c                layer_get_bounds
- .text.layer_mark_dirty
+                0x0000122c                dict_write_uint8
+ .text.fonts_get_system_font
                 0x00001238        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001238                layer_mark_dirty
- .text.layer_set_update_proc
+                0x00001238                fonts_get_system_font
+ .text.graphics_draw_line
                 0x00001244        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001244                layer_set_update_proc
- .text.memmove  0x00001250        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001250                memmove
- .text.memset   0x0000125c        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x0000125c                memset
- .text.persist_exists
+                0x00001244                graphics_draw_line
+ .text.graphics_draw_round_rect
+                0x00001250        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x00001250                graphics_draw_round_rect
+ .text.graphics_fill_circle
+                0x0000125c        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x0000125c                graphics_fill_circle
+ .text.graphics_fill_rect
                 0x00001268        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001268                persist_exists
- .text.persist_read_bool
+                0x00001268                graphics_fill_rect
+ .text.layer_add_child
                 0x00001274        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001274                persist_read_bool
- .text.persist_write_bool
+                0x00001274                layer_add_child
+ .text.layer_create
                 0x00001280        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001280                persist_write_bool
- .text.snprintf
+                0x00001280                layer_create
+ .text.layer_destroy
                 0x0000128c        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x0000128c                snprintf
- .text.strftime
+                0x0000128c                layer_destroy
+ .text.layer_get_bounds
                 0x00001298        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001298                strftime
- .text.strlen   0x000012a4        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000012a4                strlen
- .text.strncpy  0x000012b0        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000012b0                strncpy
- .text.tick_timer_service_subscribe
-                0x000012bc        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000012bc                tick_timer_service_subscribe
- .text.tick_timer_service_unsubscribe
-                0x000012c8        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000012c8                tick_timer_service_unsubscribe
- .text.vibes_double_pulse
+                0x00001298                layer_get_bounds
+ .text.layer_mark_dirty
+                0x000012a4        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x000012a4                layer_mark_dirty
+ .text.layer_set_update_proc
+                0x000012b0        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x000012b0                layer_set_update_proc
+ .text.memmove  0x000012bc        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x000012bc                memmove
+ .text.memset   0x000012c8        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x000012c8                memset
+ .text.persist_exists
                 0x000012d4        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000012d4                vibes_double_pulse
- .text.window_create
+                0x000012d4                persist_exists
+ .text.persist_read_bool
                 0x000012e0        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000012e0                window_create
- .text.window_destroy
+                0x000012e0                persist_read_bool
+ .text.persist_write_bool
                 0x000012ec        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000012ec                window_destroy
- .text.window_get_root_layer
+                0x000012ec                persist_write_bool
+ .text.snprintf
                 0x000012f8        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000012f8                window_get_root_layer
- .text.window_set_window_handlers
+                0x000012f8                snprintf
+ .text.strftime
                 0x00001304        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001304                window_set_window_handlers
- .text.window_stack_push
-                0x00001310        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001310                window_stack_push
- .text.app_message_outbox_begin
-                0x0000131c        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x0000131c                app_message_outbox_begin
- .text.app_message_outbox_send
+                0x00001304                strftime
+ .text.strlen   0x00001310        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x00001310                strlen
+ .text.strncpy  0x0000131c        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x0000131c                strncpy
+ .text.tick_timer_service_subscribe
                 0x00001328        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001328                app_message_outbox_send
- .text.app_message_register_inbox_received
+                0x00001328                tick_timer_service_subscribe
+ .text.tick_timer_service_unsubscribe
                 0x00001334        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001334                app_message_register_inbox_received
- .text.graphics_draw_text
+                0x00001334                tick_timer_service_unsubscribe
+ .text.vibes_double_pulse
                 0x00001340        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001340                graphics_draw_text
- .text.persist_read_data
+                0x00001340                vibes_double_pulse
+ .text.vibes_enqueue_custom_pattern
                 0x0000134c        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x0000134c                persist_read_data
- .text.persist_write_data
+                0x0000134c                vibes_enqueue_custom_pattern
+ .text.vibes_long_pulse
                 0x00001358        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001358                persist_write_data
- .text.graphics_text_layout_get_content_size
+                0x00001358                vibes_long_pulse
+ .text.window_create
                 0x00001364        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001364                graphics_text_layout_get_content_size
- .text.graphics_context_set_fill_color
+                0x00001364                window_create
+ .text.window_destroy
                 0x00001370        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001370                graphics_context_set_fill_color
- .text.graphics_context_set_stroke_color
+                0x00001370                window_destroy
+ .text.window_get_root_layer
                 0x0000137c        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x0000137c                graphics_context_set_stroke_color
- .text.graphics_context_set_text_color
+                0x0000137c                window_get_root_layer
+ .text.window_set_window_handlers
                 0x00001388        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001388                graphics_context_set_text_color
- .text.localtime
+                0x00001388                window_set_window_handlers
+ .text.window_stack_push
                 0x00001394        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x00001394                localtime
- .text.graphics_context_set_stroke_width
+                0x00001394                window_stack_push
+ .text.app_message_outbox_begin
                 0x000013a0        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000013a0                graphics_context_set_stroke_width
- .text.time     0x000013ac        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000013ac                time
- .text.connection_service_peek_pebble_app_connection
+                0x000013a0                app_message_outbox_begin
+ .text.app_message_outbox_send
+                0x000013ac        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x000013ac                app_message_outbox_send
+ .text.app_message_register_inbox_received
                 0x000013b8        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000013b8                connection_service_peek_pebble_app_connection
- .text.connection_service_subscribe
+                0x000013b8                app_message_register_inbox_received
+ .text.graphics_draw_text
                 0x000013c4        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000013c4                connection_service_subscribe
- .text.connection_service_unsubscribe
+                0x000013c4                graphics_draw_text
+ .text.persist_read_data
                 0x000013d0        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000013d0                connection_service_unsubscribe
- .text.grect_inset
+                0x000013d0                persist_read_data
+ .text.persist_write_data
                 0x000013dc        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000013dc                grect_inset
- .text.time_start_of_today
+                0x000013dc                persist_write_data
+ .text.graphics_text_layout_get_content_size
                 0x000013e8        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000013e8                time_start_of_today
- .text.quiet_time_is_active
+                0x000013e8                graphics_text_layout_get_content_size
+ .text.graphics_context_set_fill_color
                 0x000013f4        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
-                0x000013f4                quiet_time_is_active
+                0x000013f4                graphics_context_set_fill_color
+ .text.graphics_context_set_stroke_color
+                0x00001400        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x00001400                graphics_context_set_stroke_color
+ .text.graphics_context_set_text_color
+                0x0000140c        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x0000140c                graphics_context_set_text_color
+ .text.localtime
+                0x00001418        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x00001418                localtime
+ .text.graphics_context_set_stroke_width
+                0x00001424        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x00001424                graphics_context_set_stroke_width
+ .text.time     0x00001430        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x00001430                time
+ .text.connection_service_peek_pebble_app_connection
+                0x0000143c        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x0000143c                connection_service_peek_pebble_app_connection
+ .text.connection_service_subscribe
+                0x00001448        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x00001448                connection_service_subscribe
+ .text.connection_service_unsubscribe
+                0x00001454        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x00001454                connection_service_unsubscribe
+ .text.grect_inset
+                0x00001460        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x00001460                grect_inset
+ .text.time_start_of_today
+                0x0000146c        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x0000146c                time_start_of_today
+ .text.quiet_time_is_active
+                0x00001478        0xc /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+                0x00001478                quiet_time_is_active
  *(.rodata)
  *(.rodata*)
  .rodata.prv_update_time.str1.1
-                0x00001400      0x105 src/c/nhl-face.c.25.o
+                0x00001484      0x105 src/c/nhl-face.c.25.o
                                  0x15 (size before relaxing)
  .rodata.prv_canvas_update.str1.1
-                0x00001505       0x5d src/c/nhl-face.c.25.o
+                0x00001589       0x5d src/c/nhl-face.c.25.o
  .rodata.main.str1.1
-                0x00001505        0xb src/c/nhl-face.c.25.o
+                0x00001589        0xb src/c/nhl-face.c.25.o
+ *fill*         0x00001589        0x3 
+ .rodata.FINAL_VIBE
+                0x0000158c        0xc src/c/nhl-face.c.25.o
+ .rodata.GOAL_VIBE
+                0x00001598       0x14 src/c/nhl-face.c.25.o
  .rodata.str1.1
-                0x00001505       0x8e src/c/nhl-face.c.25.o
+                0x000015ac       0x8e src/c/nhl-face.c.25.o
 
-.glue_7         0x00001508        0x0
- .glue_7        0x00001508        0x0 linker stubs
+.glue_7         0x000015ac        0x0
+ .glue_7        0x000015ac        0x0 linker stubs
 
-.glue_7t        0x00001508        0x0
- .glue_7t       0x00001508        0x0 linker stubs
+.glue_7t        0x000015ac        0x0
+ .glue_7t       0x000015ac        0x0 linker stubs
 
-.vfp11_veneer   0x00001508        0x0
- .vfp11_veneer  0x00001508        0x0 linker stubs
+.vfp11_veneer   0x000015ac        0x0
+ .vfp11_veneer  0x000015ac        0x0 linker stubs
 
-.v4_bx          0x00001508        0x0
- .v4_bx         0x00001508        0x0 linker stubs
+.v4_bx          0x000015ac        0x0
+ .v4_bx         0x000015ac        0x0 linker stubs
 
-.init           0x00001508        0x4
- .init          0x00001508        0x4 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crti.o
-                0x00001508                _init
+.init           0x000015ac        0x4
+ .init          0x000015ac        0x4 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crti.o
+                0x000015ac                _init
 
-.fini           0x0000150c        0x4
- .fini          0x0000150c        0x4 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crti.o
-                0x0000150c                _fini
+.fini           0x000015b0        0x4
+ .fini          0x000015b0        0x4 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crti.o
+                0x000015b0                _fini
 
-.iplt           0x00001510        0x0
- .iplt          0x00001510        0x0 src/c/nhl-face.c.25.o
+.iplt           0x000015b4        0x0
+ .iplt          0x000015b4        0x0 src/c/nhl-face.c.25.o
 
-.rel.dyn        0x00001510        0x0
- .rel.iplt      0x00001510        0x0 src/c/nhl-face.c.25.o
- .rel.got       0x00001510        0x0 src/c/nhl-face.c.25.o
+.rel.dyn        0x000015b4        0x0
+ .rel.iplt      0x000015b4        0x0 src/c/nhl-face.c.25.o
+ .rel.got       0x000015b4        0x0 src/c/nhl-face.c.25.o
 
-.data           0x00001510       0x90
+.data           0x000015b4       0x98
  *(.data)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crti.o
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crtbegin.o
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/crt0.o
- .data          0x00001510        0x0 src/c/nhl-face.c.25.o
- .data          0x00001510        0x0 basalt/appinfo.auto.c.25.o
- .data          0x00001510        0x0 basalt/src/resource_ids.auto.c.25.o
- .data          0x00001510        0x0 src/message_keys.auto.c.25.o
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-atexit.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-exit.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-findfp.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-fwalk.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-stdio.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-closer.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-reent.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-impure.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-lseekr.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-readr.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-writer.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-init.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-fini.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-lock.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-__atexit.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-__call_atexit.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-freer.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-mallocr.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-mlock.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-fclose.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-fflush.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-sbrkr.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-sysconf.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-errno.o)
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crtend.o
- .data          0x00001510        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crtn.o
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crti.o
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crtbegin.o
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/crt0.o
+ .data          0x000015b4        0x0 src/c/nhl-face.c.25.o
+ .data          0x000015b4        0x0 basalt/appinfo.auto.c.25.o
+ .data          0x000015b4        0x0 basalt/src/resource_ids.auto.c.25.o
+ .data          0x000015b4        0x0 src/message_keys.auto.c.25.o
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/current/sdk-core/pebble/basalt/lib/libpebble.a(tmpFRPTsFpebble.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-atexit.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-exit.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-findfp.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-fwalk.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-stdio.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-closer.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-reent.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-impure.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-lseekr.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-readr.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-writer.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-init.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-fini.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-lock.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-__atexit.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-__call_atexit.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-freer.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-mallocr.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-mlock.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-fclose.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-fflush.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-sbrkr.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-sysconf.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-errno.o)
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crtend.o
+ .data          0x000015b4        0x0 /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crtn.o
  *(.data.*)
  .data.rel.ro.local.FONT_TIME_BIG
-                0x00001510        0xc src/c/nhl-face.c.25.o
+                0x000015b4        0xc src/c/nhl-face.c.25.o
  .data.rel.ro.local.FONT_TIME_SMALL
-                0x0000151c        0xc src/c/nhl-face.c.25.o
+                0x000015c0        0xc src/c/nhl-face.c.25.o
  .data.rel.ro.local.FONT_24_BOLD
-                0x00001528        0xc src/c/nhl-face.c.25.o
+                0x000015cc        0xc src/c/nhl-face.c.25.o
  .data.rel.ro.local.FONT_18_BOLD
-                0x00001534        0xc src/c/nhl-face.c.25.o
+                0x000015d8        0xc src/c/nhl-face.c.25.o
  .data.rel.ro.local.FONT_14_BOLD
-                0x00001540        0xc src/c/nhl-face.c.25.o
+                0x000015e4        0xc src/c/nhl-face.c.25.o
  .data.s_bt_connected
-                0x0000154c        0x1 src/c/nhl-face.c.25.o
- *fill*         0x0000154d        0x3 
+                0x000015f0        0x1 src/c/nhl-face.c.25.o
+ *fill*         0x000015f1        0x3 
  .data.MESSAGE_KEY_VibeOnDisconnect
-                0x00001550        0x4 src/message_keys.auto.c.25.o
-                0x00001550                MESSAGE_KEY_VibeOnDisconnect
+                0x000015f4        0x4 src/message_keys.auto.c.25.o
+                0x000015f4                MESSAGE_KEY_VibeOnDisconnect
  .data.MESSAGE_KEY_TeamName
-                0x00001554        0x4 src/message_keys.auto.c.25.o
-                0x00001554                MESSAGE_KEY_TeamName
+                0x000015f8        0x4 src/message_keys.auto.c.25.o
+                0x000015f8                MESSAGE_KEY_TeamName
  .data.MESSAGE_KEY_RequestUpdate
-                0x00001558        0x4 src/message_keys.auto.c.25.o
-                0x00001558                MESSAGE_KEY_RequestUpdate
+                0x000015fc        0x4 src/message_keys.auto.c.25.o
+                0x000015fc                MESSAGE_KEY_RequestUpdate
  .data.MESSAGE_KEY_RefreshMins
-                0x0000155c        0x4 src/message_keys.auto.c.25.o
-                0x0000155c                MESSAGE_KEY_RefreshMins
+                0x00001600        0x4 src/message_keys.auto.c.25.o
+                0x00001600                MESSAGE_KEY_RefreshMins
  .data.MESSAGE_KEY_Record
-                0x00001560        0x4 src/message_keys.auto.c.25.o
-                0x00001560                MESSAGE_KEY_Record
+                0x00001604        0x4 src/message_keys.auto.c.25.o
+                0x00001604                MESSAGE_KEY_Record
  .data.MESSAGE_KEY_Points
-                0x00001564        0x4 src/message_keys.auto.c.25.o
-                0x00001564                MESSAGE_KEY_Points
+                0x00001608        0x4 src/message_keys.auto.c.25.o
+                0x00001608                MESSAGE_KEY_Points
  .data.MESSAGE_KEY_LeagueRank
-                0x00001568        0x4 src/message_keys.auto.c.25.o
-                0x00001568                MESSAGE_KEY_LeagueRank
+                0x0000160c        0x4 src/message_keys.auto.c.25.o
+                0x0000160c                MESSAGE_KEY_LeagueRank
+ .data.MESSAGE_KEY_GoalScored
+                0x00001610        0x4 src/message_keys.auto.c.25.o
+                0x00001610                MESSAGE_KEY_GoalScored
  .data.MESSAGE_KEY_GameState
-                0x0000156c        0x4 src/message_keys.auto.c.25.o
-                0x0000156c                MESSAGE_KEY_GameState
+                0x00001614        0x4 src/message_keys.auto.c.25.o
+                0x00001614                MESSAGE_KEY_GameState
  .data.MESSAGE_KEY_GameStart
-                0x00001570        0x4 src/message_keys.auto.c.25.o
-                0x00001570                MESSAGE_KEY_GameStart
+                0x00001618        0x4 src/message_keys.auto.c.25.o
+                0x00001618                MESSAGE_KEY_GameStart
  .data.MESSAGE_KEY_GameOpp
-                0x00001574        0x4 src/message_keys.auto.c.25.o
-                0x00001574                MESSAGE_KEY_GameOpp
+                0x0000161c        0x4 src/message_keys.auto.c.25.o
+                0x0000161c                MESSAGE_KEY_GameOpp
  .data.MESSAGE_KEY_GameLine2
-                0x00001578        0x4 src/message_keys.auto.c.25.o
-                0x00001578                MESSAGE_KEY_GameLine2
+                0x00001620        0x4 src/message_keys.auto.c.25.o
+                0x00001620                MESSAGE_KEY_GameLine2
  .data.MESSAGE_KEY_GameLine1
-                0x0000157c        0x4 src/message_keys.auto.c.25.o
-                0x0000157c                MESSAGE_KEY_GameLine1
+                0x00001624        0x4 src/message_keys.auto.c.25.o
+                0x00001624                MESSAGE_KEY_GameLine1
  .data.MESSAGE_KEY_GameHome
-                0x00001580        0x4 src/message_keys.auto.c.25.o
-                0x00001580                MESSAGE_KEY_GameHome
+                0x00001628        0x4 src/message_keys.auto.c.25.o
+                0x00001628                MESSAGE_KEY_GameHome
+ .data.MESSAGE_KEY_GameBuzz
+                0x0000162c        0x4 src/message_keys.auto.c.25.o
+                0x0000162c                MESSAGE_KEY_GameBuzz
  .data.MESSAGE_KEY_DivRank
-                0x00001584        0x4 src/message_keys.auto.c.25.o
-                0x00001584                MESSAGE_KEY_DivRank
+                0x00001630        0x4 src/message_keys.auto.c.25.o
+                0x00001630                MESSAGE_KEY_DivRank
  .data.MESSAGE_KEY_DivName
-                0x00001588        0x4 src/message_keys.auto.c.25.o
-                0x00001588                MESSAGE_KEY_DivName
+                0x00001634        0x4 src/message_keys.auto.c.25.o
+                0x00001634                MESSAGE_KEY_DivName
  .data.MESSAGE_KEY_ColorText2
-                0x0000158c        0x4 src/message_keys.auto.c.25.o
-                0x0000158c                MESSAGE_KEY_ColorText2
+                0x00001638        0x4 src/message_keys.auto.c.25.o
+                0x00001638                MESSAGE_KEY_ColorText2
  .data.MESSAGE_KEY_ColorText
-                0x00001590        0x4 src/message_keys.auto.c.25.o
-                0x00001590                MESSAGE_KEY_ColorText
+                0x0000163c        0x4 src/message_keys.auto.c.25.o
+                0x0000163c                MESSAGE_KEY_ColorText
  .data.MESSAGE_KEY_ColorTertiary
-                0x00001594        0x4 src/message_keys.auto.c.25.o
-                0x00001594                MESSAGE_KEY_ColorTertiary
+                0x00001640        0x4 src/message_keys.auto.c.25.o
+                0x00001640                MESSAGE_KEY_ColorTertiary
  .data.MESSAGE_KEY_ColorSecondary
-                0x00001598        0x4 src/message_keys.auto.c.25.o
-                0x00001598                MESSAGE_KEY_ColorSecondary
+                0x00001644        0x4 src/message_keys.auto.c.25.o
+                0x00001644                MESSAGE_KEY_ColorSecondary
  .data.MESSAGE_KEY_ColorPrimary
-                0x0000159c        0x4 src/message_keys.auto.c.25.o
-                0x0000159c                MESSAGE_KEY_ColorPrimary
+                0x00001648        0x4 src/message_keys.auto.c.25.o
+                0x00001648                MESSAGE_KEY_ColorPrimary
 
-.igot.plt       0x000015a0        0x0
- .igot.plt      0x000015a0        0x0 src/c/nhl-face.c.25.o
+.igot.plt       0x0000164c        0x0
+ .igot.plt      0x0000164c        0x0 src/c/nhl-face.c.25.o
 
-.got            0x000015a0       0x50
- .got           0x000015a0       0x50 src/c/nhl-face.c.25.o
+.got            0x0000164c       0x58
+ .got           0x0000164c       0x58 src/c/nhl-face.c.25.o
 
-.got.plt        0x000015f0        0xc
- .got.plt       0x000015f0        0xc src/c/nhl-face.c.25.o
-                0x000015f0                _GLOBAL_OFFSET_TABLE_
+.got.plt        0x000016a4        0xc
+ .got.plt       0x000016a4        0xc src/c/nhl-face.c.25.o
+                0x000016a4                _GLOBAL_OFFSET_TABLE_
 
-.bss            0x000015fc      0x104
+.bss            0x000016b0      0x104
  *(.bss)
  *(.bss.*)
  .bss.s_next2_buf
-                0x000015fc       0x20 src/c/nhl-face.c.25.o
+                0x000016b0       0x20 src/c/nhl-face.c.25.o
  .bss.s_next1_buf
-                0x0000161c       0x18 src/c/nhl-face.c.25.o
+                0x000016d0       0x18 src/c/nhl-face.c.25.o
  .bss.s_vibe_on_disconnect
-                0x00001634        0x1 src/c/nhl-face.c.25.o
+                0x000016e8        0x1 src/c/nhl-face.c.25.o
  .bss.s_quiet_time
-                0x00001635        0x1 src/c/nhl-face.c.25.o
+                0x000016e9        0x1 src/c/nhl-face.c.25.o
  .bss.s_date_buf
-                0x00001636       0x10 src/c/nhl-face.c.25.o
+                0x000016ea       0x10 src/c/nhl-face.c.25.o
  .bss.s_time_buf
-                0x00001646        0x8 src/c/nhl-face.c.25.o
- *fill*         0x0000164e        0x2 
+                0x000016fa        0x8 src/c/nhl-face.c.25.o
+ *fill*         0x00001702        0x2 
  .bss.s_refresh_countdown
-                0x00001650        0x4 src/c/nhl-face.c.25.o
- .bss.s_data    0x00001654       0xa4 src/c/nhl-face.c.25.o
- .bss.s_canvas  0x000016f8        0x4 src/c/nhl-face.c.25.o
- .bss.s_window  0x000016fc        0x4 src/c/nhl-face.c.25.o
+                0x00001704        0x4 src/c/nhl-face.c.25.o
+ .bss.s_data    0x00001708       0xa4 src/c/nhl-face.c.25.o
+ .bss.s_canvas  0x000017ac        0x4 src/c/nhl-face.c.25.o
+ .bss.s_window  0x000017b0        0x4 src/c/nhl-face.c.25.o
 
 DISCARD
  libc.a(*)
@@ -1921,22 +1940,22 @@ LOAD /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/b
  .comment       0x00000039       0x3a /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-errno.o)
  .comment       0x00000039       0x3a /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crtend.o
 
-.debug_info     0x00000000     0x32d5
- .debug_info    0x00000000     0x2d55 src/c/nhl-face.c.25.o
- .debug_info    0x00002d55      0x33e basalt/appinfo.auto.c.25.o
- .debug_info    0x00003093       0x65 basalt/src/resource_ids.auto.c.25.o
- .debug_info    0x000030f8      0x1dd src/message_keys.auto.c.25.o
+.debug_info     0x00000000     0x3446
+ .debug_info    0x00000000     0x2e76 src/c/nhl-face.c.25.o
+ .debug_info    0x00002e76      0x33e basalt/appinfo.auto.c.25.o
+ .debug_info    0x000031b4       0x65 basalt/src/resource_ids.auto.c.25.o
+ .debug_info    0x00003219      0x22d src/message_keys.auto.c.25.o
 
-.debug_abbrev   0x00000000      0x6c3
- .debug_abbrev  0x00000000      0x59a src/c/nhl-face.c.25.o
- .debug_abbrev  0x0000059a       0xb9 basalt/appinfo.auto.c.25.o
- .debug_abbrev  0x00000653       0x26 basalt/src/resource_ids.auto.c.25.o
- .debug_abbrev  0x00000679       0x4a src/message_keys.auto.c.25.o
+.debug_abbrev   0x00000000      0x6e3
+ .debug_abbrev  0x00000000      0x5ba src/c/nhl-face.c.25.o
+ .debug_abbrev  0x000005ba       0xb9 basalt/appinfo.auto.c.25.o
+ .debug_abbrev  0x00000673       0x26 basalt/src/resource_ids.auto.c.25.o
+ .debug_abbrev  0x00000699       0x4a src/message_keys.auto.c.25.o
 
 .debug_loclists
-                0x00000000     0x132a
+                0x00000000     0x1350
  .debug_loclists
-                0x00000000     0x132a src/c/nhl-face.c.25.o
+                0x00000000     0x1350 src/c/nhl-face.c.25.o
 
 .debug_aranges  0x00000000       0xe8
  .debug_aranges
@@ -1949,22 +1968,22 @@ LOAD /home/jessica/.local/share/pebble-sdk/SDKs/4.33.1/toolchain/arm-none-eabi/b
                 0x000000d0       0x18 src/message_keys.auto.c.25.o
 
 .debug_rnglists
-                0x00000000       0xe5
+                0x00000000       0xf3
  .debug_rnglists
-                0x00000000       0xe5 src/c/nhl-face.c.25.o
+                0x00000000       0xf3 src/c/nhl-face.c.25.o
 
-.debug_line     0x00000000     0x131e
- .debug_line    0x00000000     0x1031 src/c/nhl-face.c.25.o
- .debug_line    0x00001031      0x189 basalt/appinfo.auto.c.25.o
- .debug_line    0x000011ba       0x3f basalt/src/resource_ids.auto.c.25.o
- .debug_line    0x000011f9      0x125 src/message_keys.auto.c.25.o
+.debug_line     0x00000000     0x1388
+ .debug_line    0x00000000     0x109b src/c/nhl-face.c.25.o
+ .debug_line    0x0000109b      0x189 basalt/appinfo.auto.c.25.o
+ .debug_line    0x00001224       0x3f basalt/src/resource_ids.auto.c.25.o
+ .debug_line    0x00001263      0x125 src/message_keys.auto.c.25.o
 
-.debug_str      0x00000000     0x1561
- .debug_str     0x00000000     0x1561 src/c/nhl-face.c.25.o
-                               0x12b6 (size before relaxing)
- .debug_str     0x00001561      0x4cf basalt/appinfo.auto.c.25.o
- .debug_str     0x00001561      0x163 basalt/src/resource_ids.auto.c.25.o
- .debug_str     0x00001561      0x369 src/message_keys.auto.c.25.o
+.debug_str      0x00000000     0x1669
+ .debug_str     0x00000000     0x1669 src/c/nhl-face.c.25.o
+                               0x1364 (size before relaxing)
+ .debug_str     0x00001669      0x4cf basalt/appinfo.auto.c.25.o
+ .debug_str     0x00001669      0x163 basalt/src/resource_ids.auto.c.25.o
+ .debug_str     0x00001669      0x3ef src/message_keys.auto.c.25.o
 
-.debug_frame    0x00000000      0x25c
- .debug_frame   0x00000000      0x25c src/c/nhl-face.c.25.o
+.debug_frame    0x00000000      0x264
+ .debug_frame   0x00000000      0x264 src/c/nhl-face.c.25.o

@@ -5,6 +5,7 @@
 #define DATA_VERSION 4
 
 enum { STATE_NONE = 0, STATE_NEXT = 1, STATE_LIVE = 2, STATE_FINAL = 3 };
+enum { BUZZ_PERIOD = 1, BUZZ_FINAL = 2 };
 
 // Everything the phone sends us; persisted so the face draws instantly on launch.
 typedef struct {
@@ -352,6 +353,11 @@ static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   }
 }
 
+// Short, short, long: distinct from a notification buzz.
+static const uint32_t GOAL_VIBE[] = { 150, 100, 150, 100, 500 };
+// Two long buzzes for the final horn.
+static const uint32_t FINAL_VIBE[] = { 500, 250, 500 };
+
 static void prv_bt_handler(bool connected) {
   s_bt_connected = connected;
   if (!connected && s_vibe_on_disconnect && !quiet_time_is_active()) {
@@ -384,6 +390,22 @@ static void prv_inbox_received(DictionaryIterator *iter, void *context) {
   prv_copy_string(s_data.div_rank, sizeof(s_data.div_rank), dict_find(iter, MESSAGE_KEY_DivRank));
   prv_copy_string(s_data.league_rank, sizeof(s_data.league_rank), dict_find(iter, MESSAGE_KEY_LeagueRank));
   prv_copy_int(&s_data.refresh_mins, dict_find(iter, MESSAGE_KEY_RefreshMins));
+  if (!quiet_time_is_active()) {
+    Tuple *buzz = dict_find(iter, MESSAGE_KEY_GameBuzz);
+    if (dict_find(iter, MESSAGE_KEY_GoalScored)) {
+      vibes_enqueue_custom_pattern((VibePattern) {
+        .durations = GOAL_VIBE,
+        .num_segments = ARRAY_LENGTH(GOAL_VIBE),
+      });
+    } else if (buzz && buzz->value->int32 == BUZZ_FINAL) {
+      vibes_enqueue_custom_pattern((VibePattern) {
+        .durations = FINAL_VIBE,
+        .num_segments = ARRAY_LENGTH(FINAL_VIBE),
+      });
+    } else if (buzz && buzz->value->int32 == BUZZ_PERIOD) {
+      vibes_long_pulse();
+    }
+  }
   Tuple *vibe = dict_find(iter, MESSAGE_KEY_VibeOnDisconnect);
   if (vibe) {
     s_vibe_on_disconnect = vibe->value->int32 != 0;

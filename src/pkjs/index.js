@@ -7,6 +7,11 @@ var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
 
 var API = 'https://api-web.nhle.com/v1';
 var STATE_NONE = 0, STATE_NEXT = 1, STATE_LIVE = 2, STATE_FINAL = 3;
+// What the watch should buzz for, besides goals.
+var BUZZ_PERIOD = 1, BUZZ_FINAL = 2;
+// Game stages, in order: before puck drop, then each period in play (odd) and the
+// intermission after it (even), then final.
+var STAGE_PREGAME = 0, STAGE_FINAL = 99;
 // Show a finished game's final score until this long after puck drop.
 var FINAL_WINDOW_MS = 6 * 60 * 60 * 1000;
 
@@ -186,6 +191,44 @@ function buildStandingsFields(team, standings) {
   return msg;
 }
 
+// True when the team's score in this game went up since the last check. The first
+// look at a game only records its score, so joining mid-game doesn't buzz.
+function teamScored(team, game) {
+  if (!game) return false;
+  var side = game.homeTeam.abbrev === team ? game.homeTeam : game.awayTeam;
+  var score = side.score || 0;
+  var last = null;
+  try { last = JSON.parse(localStorage.getItem('lastScore')); } catch (e) {}
+  localStorage.setItem('lastScore', JSON.stringify({ id: game.id, score: score }));
+  return !!last && last.id === game.id && score > last.score;
+}
+
+// The tracked game's current stage, or null when it can't be told this update.
+function gameStage(picked, liveScore) {
+  if (picked.live) {
+    if (!liveScore || !liveScore.periodDescriptor) return null;
+    var stage = liveScore.periodDescriptor.number * 2 - 1;
+    if (liveScore.clock && liveScore.clock.inIntermission) stage += 1;
+    return { id: picked.live.id, stage: stage };
+  }
+  if (picked.recent) return { id: picked.recent.id, stage: STAGE_FINAL };
+  if (picked.next) return { id: picked.next.id, stage: STAGE_PREGAME };
+  return null;
+}
+
+// BUZZ_PERIOD or BUZZ_FINAL when the game moved into a new period or ended since
+// the last check, else 0. Only changes seen happen count, so joining late doesn't buzz.
+function stageBuzz(picked, liveScore) {
+  var cur = gameStage(picked, liveScore);
+  if (!cur) return 0;
+  var last = null;
+  try { last = JSON.parse(localStorage.getItem('lastStage')); } catch (e) {}
+  localStorage.setItem('lastStage', JSON.stringify(cur));
+  if (!last || last.id !== cur.id || cur.stage <= last.stage) return 0;
+  if (cur.stage === STAGE_FINAL) return last.stage > STAGE_PREGAME ? BUZZ_FINAL : 0;
+  return cur.stage % 2 === 1 ? BUZZ_PERIOD : 0;
+}
+
 function sendToWatch(msg) {
   Pebble.sendAppMessage(msg, function() {
     console.log('Sent update to watch');
@@ -222,6 +265,14 @@ function update() {
     function finish(liveScore) {
       var gm = buildGameFields(team, picked, liveScore);
       for (var k in gm) msg[k] = gm[k];
+      // Include the just-finished game so a game-ending goal still counts.
+      var scored = teamScored(team, liveScore || picked.live || picked.recent);
+      if (scored && localStorage.getItem('vibeOnGoal') === '1') msg[keys.GoalScored] = 1;
+      var buzz = stageBuzz(picked, liveScore);
+      if ((buzz === BUZZ_PERIOD && localStorage.getItem('vibeOnPeriod') === '1') ||
+          (buzz === BUZZ_FINAL && localStorage.getItem('vibeOnFinal') === '1')) {
+        msg[keys.GameBuzz] = buzz;
+      }
       sendToWatch(msg);
     }
     if (!picked.live) {
@@ -268,6 +319,9 @@ Pebble.addEventListener('webviewclosed', function(e) {
   var team = settings[keys.ConfigTeam];
   if (teams[team]) localStorage.setItem('team', team);
   localStorage.setItem('awayColors', settings[keys.ConfigAwayColors] ? '1' : '0');
+  localStorage.setItem('vibeOnGoal', settings[keys.ConfigVibeOnGoal] ? '1' : '0');
+  localStorage.setItem('vibeOnPeriod', settings[keys.ConfigVibeOnPeriod] ? '1' : '0');
+  localStorage.setItem('vibeOnFinal', settings[keys.ConfigVibeOnFinal] ? '1' : '0');
   localStorage.setItem('vibeOnDisconnect', settings[keys.VibeOnDisconnect] ? '1' : '0');
   update();
 });

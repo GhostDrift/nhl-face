@@ -35,6 +35,26 @@ module.exports = [
       },
       {
         type: 'toggle',
+        messageKey: 'ConfigVibeOnGoal',
+        label: 'Vibrate when your team scores',
+        description: 'Checked once a minute during games. Skipped while Quiet Time is on.',
+        defaultValue: false
+      },
+      {
+        type: 'toggle',
+        messageKey: 'ConfigVibeOnPeriod',
+        label: 'Vibrate when a period starts',
+        description: 'Includes puck drop, overtime, and shootouts.',
+        defaultValue: false
+      },
+      {
+        type: 'toggle',
+        messageKey: 'ConfigVibeOnFinal',
+        label: 'Vibrate when the game ends',
+        defaultValue: false
+      },
+      {
+        type: 'toggle',
         messageKey: 'VibeOnDisconnect',
         label: 'Vibrate when the phone disconnects',
         description: 'Skipped while Quiet Time is on.',

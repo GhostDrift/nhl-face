@@ -25,6 +25,9 @@
     "messageKeys": [
       "ConfigTeam",
       "ConfigAwayColors",
+      "ConfigVibeOnGoal",
+      "ConfigVibeOnPeriod",
+      "ConfigVibeOnFinal",
       "TeamName",
       "ColorTertiary",
       "ColorPrimary",
@@ -44,7 +47,9 @@
       "GameLine2",
       "RefreshMins",
       "RequestUpdate",
-      "VibeOnDisconnect"
+      "VibeOnDisconnect",
+      "GoalScored",
+      "GameBuzz"
     ],
     "resources": {
       "media": []
