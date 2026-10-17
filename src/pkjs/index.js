@@ -127,12 +127,17 @@ function buildStandingsFields(team, standings) {
     if (s.teamAbbrev.default === team) row = s;
   });
   if (row) {
-    msg[keys.Record] = row.wins + '-' + row.losses + '-' + row.otLosses + '  ' + row.points + ' PTS';
-    msg[keys.Rank] = '#' + row.leagueSequence + ' NHL  ' +
-                     ordinal(row.divisionSequence) + ' ' + row.divisionName.substring(0, 3).toUpperCase();
+    msg[keys.Record] = row.wins + '-' + row.losses + '-' + row.otLosses;
+    msg[keys.Points] = String(row.points);
+    msg[keys.DivName] = row.divisionName.substring(0, 3).toUpperCase();
+    msg[keys.DivRank] = ordinal(row.divisionSequence);
+    msg[keys.LeagueRank] = ordinal(row.leagueSequence);
   } else {
     msg[keys.Record] = '';
-    msg[keys.Rank] = '';
+    msg[keys.Points] = '';
+    msg[keys.DivName] = '';
+    msg[keys.DivRank] = '';
+    msg[keys.LeagueRank] = '';
   }
   return msg;
 }
@@ -152,6 +157,7 @@ function update() {
   msg[keys.TeamName] = info.name.toUpperCase();
   msg[keys.ColorPrimary] = info.primary;
   msg[keys.ColorSecondary] = info.secondary;
+  msg[keys.ColorTertiary] = info.tertiary;
   msg[keys.ColorText] = textColorFor(info.primary);
   msg[keys.ColorText2] = textColorFor(info.secondary);
 
