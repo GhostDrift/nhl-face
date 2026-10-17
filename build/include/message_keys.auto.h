@@ -6,4 +6,19 @@
 // DO NOT MODIFY - CHANGES WILL BE OVERWRITTEN
 //
 
-extern uint32_t MESSAGE_KEY_dummy;
+extern uint32_t MESSAGE_KEY_ColorPrimary;
+extern uint32_t MESSAGE_KEY_ColorSecondary;
+extern uint32_t MESSAGE_KEY_ColorText;
+extern uint32_t MESSAGE_KEY_ColorText2;
+extern uint32_t MESSAGE_KEY_ConfigTeam;
+extern uint32_t MESSAGE_KEY_GameHome;
+extern uint32_t MESSAGE_KEY_GameLine1;
+extern uint32_t MESSAGE_KEY_GameLine2;
+extern uint32_t MESSAGE_KEY_GameOpp;
+extern uint32_t MESSAGE_KEY_GameStart;
+extern uint32_t MESSAGE_KEY_GameState;
+extern uint32_t MESSAGE_KEY_Rank;
+extern uint32_t MESSAGE_KEY_Record;
+extern uint32_t MESSAGE_KEY_RefreshMins;
+extern uint32_t MESSAGE_KEY_RequestUpdate;
+extern uint32_t MESSAGE_KEY_TeamName;

@@ -1,3 +1,18 @@
 {
-    "dummy": 10000
+    "ColorPrimary": 10002,
+    "ColorSecondary": 10003,
+    "ColorText": 10004,
+    "ColorText2": 10005,
+    "ConfigTeam": 10000,
+    "GameHome": 10011,
+    "GameLine1": 10012,
+    "GameLine2": 10013,
+    "GameOpp": 10010,
+    "GameStart": 10009,
+    "GameState": 10008,
+    "Rank": 10007,
+    "Record": 10006,
+    "RefreshMins": 10014,
+    "RequestUpdate": 10015,
+    "TeamName": 10001
 }

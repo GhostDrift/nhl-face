@@ -6,4 +6,19 @@
 // DO NOT MODIFY - CHANGES WILL BE OVERWRITTEN
 //
 
-uint32_t MESSAGE_KEY_dummy = 10000;
+uint32_t MESSAGE_KEY_ColorPrimary = 10002;
+uint32_t MESSAGE_KEY_ColorSecondary = 10003;
+uint32_t MESSAGE_KEY_ColorText = 10004;
+uint32_t MESSAGE_KEY_ColorText2 = 10005;
+uint32_t MESSAGE_KEY_ConfigTeam = 10000;
+uint32_t MESSAGE_KEY_GameHome = 10011;
+uint32_t MESSAGE_KEY_GameLine1 = 10012;
+uint32_t MESSAGE_KEY_GameLine2 = 10013;
+uint32_t MESSAGE_KEY_GameOpp = 10010;
+uint32_t MESSAGE_KEY_GameStart = 10009;
+uint32_t MESSAGE_KEY_GameState = 10008;
+uint32_t MESSAGE_KEY_Rank = 10007;
+uint32_t MESSAGE_KEY_Record = 10006;
+uint32_t MESSAGE_KEY_RefreshMins = 10014;
+uint32_t MESSAGE_KEY_RequestUpdate = 10015;
+uint32_t MESSAGE_KEY_TeamName = 10001;

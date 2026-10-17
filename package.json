@@ -2,31 +2,49 @@
   "name": "nhl-face",
   "author": "MakeAwesomeHappen",
   "version": "1.0.0",
-  "keywords": ["pebble-app"],
+  "keywords": [
+    "pebble-app"
+  ],
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "pebble-clay": "^1.0.4"
+  },
   "pebble": {
-    "displayName": "nhl-face",
+    "displayName": "NHL Face",
     "uuid": "c302f985-dcbe-4a13-beff-605e512ac508",
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
-      "aplite",
       "basalt",
-      "chalk",
       "diorite",
-      "emery",
-      "flint",
-      "gabbro"
+      "emery"
     ],
     "watchapp": {
-      "watchface": false
+      "watchface": true
     },
     "messageKeys": [
-      "dummy"
+      "ConfigTeam",
+      "TeamName",
+      "ColorPrimary",
+      "ColorSecondary",
+      "ColorText",
+      "ColorText2",
+      "Record",
+      "Rank",
+      "GameState",
+      "GameStart",
+      "GameOpp",
+      "GameHome",
+      "GameLine1",
+      "GameLine2",
+      "RefreshMins",
+      "RequestUpdate"
     ],
     "resources": {
       "media": []
-    }
+    },
+    "capabilities": [
+      "configurable"
+    ]
   }
 }

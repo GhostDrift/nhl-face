@@ -1,33 +1,61 @@
 {
-    "displayName": "nhl-face",
+    "displayName": "NHL Face",
     "uuid": "c302f985-dcbe-4a13-beff-605e512ac508",
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
-        "aplite",
         "basalt",
-        "chalk",
         "diorite",
-        "emery",
-        "flint",
-        "gabbro"
+        "emery"
     ],
     "watchapp": {
-        "watchface": false
+        "watchface": true
     },
     "messageKeys": {
-        "dummy": 10000
+        "ConfigTeam": 10000,
+        "TeamName": 10001,
+        "ColorPrimary": 10002,
+        "ColorSecondary": 10003,
+        "ColorText": 10004,
+        "ColorText2": 10005,
+        "Record": 10006,
+        "Rank": 10007,
+        "GameState": 10008,
+        "GameStart": 10009,
+        "GameOpp": 10010,
+        "GameHome": 10011,
+        "GameLine1": 10012,
+        "GameLine2": 10013,
+        "RefreshMins": 10014,
+        "RequestUpdate": 10015
     },
     "resources": {
         "media": []
     },
+    "capabilities": [
+        "configurable"
+    ],
     "name": "nhl-face",
-    "shortName": "nhl-face",
-    "longName": "nhl-face",
+    "shortName": "NHL Face",
+    "longName": "NHL Face",
     "versionLabel": "1.0.0",
     "companyName": "MakeAwesomeHappen",
     "appKeys": {
-        "dummy": 10000
-    },
-    "capabilities": []
+        "ConfigTeam": 10000,
+        "TeamName": 10001,
+        "ColorPrimary": 10002,
+        "ColorSecondary": 10003,
+        "ColorText": 10004,
+        "ColorText2": 10005,
+        "Record": 10006,
+        "Rank": 10007,
+        "GameState": 10008,
+        "GameStart": 10009,
+        "GameOpp": 10010,
+        "GameHome": 10011,
+        "GameLine1": 10012,
+        "GameLine2": 10013,
+        "RefreshMins": 10014,
+        "RequestUpdate": 10015
+    }
 }
