@@ -50,8 +50,8 @@ module.exports = [
       {
         type: 'toggle',
         messageKey: 'ConfigVibeOnPeriod',
-        label: 'Vibrate when a period starts',
-        description: 'Includes puck drop, overtime, and shootouts.',
+        label: 'Vibrate when a period starts or ends',
+        description: 'Includes puck drop, intermissions, overtime, and shootouts.',
         defaultValue: false
       },
       {

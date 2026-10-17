@@ -260,7 +260,7 @@ function gameStage(picked, liveScore) {
   return null;
 }
 
-// BUZZ_PERIOD or BUZZ_FINAL when the game moved into a new period or ended since
+// BUZZ_PERIOD or BUZZ_FINAL when a period started or ended, or the game ended, since
 // the last check, else 0. Only changes seen happen count, so joining late doesn't buzz.
 function stageBuzz(picked, liveScore) {
   var cur = gameStage(picked, liveScore);
@@ -270,7 +270,7 @@ function stageBuzz(picked, liveScore) {
   localStorage.setItem('lastStage', JSON.stringify(cur));
   if (!last || last.id !== cur.id || cur.stage <= last.stage) return 0;
   if (cur.stage === STAGE_FINAL) return last.stage > STAGE_PREGAME ? BUZZ_FINAL : 0;
-  return cur.stage % 2 === 1 ? BUZZ_PERIOD : 0;
+  return BUZZ_PERIOD;
 }
 
 // Runs the goal, period, and final checks for a game and adds whatever the watch
@@ -307,7 +307,7 @@ function stopLivePoll() {
 }
 
 // Polls the scoreboard for a live game and messages the watch only when there's a
-// goal, a new period, or the final horn. Once the game ends, does a full update.
+// goal, a period starting or ending, or the final horn. Once the game ends, does a full update.
 function startLivePoll(team, game) {
   if (livePoll && livePoll.team === team && livePoll.id === game.id) return;
   stopLivePoll();
