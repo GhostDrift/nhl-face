@@ -199,6 +199,7 @@ function update() {
   var info = teams[team];
   var msg = {};
   msg[keys.TeamName] = info.name.toUpperCase();
+  msg[keys.VibeOnDisconnect] = localStorage.getItem('vibeOnDisconnect') === '1' ? 1 : 0;
   setColors(msg, teamColors(info, false));
 
   var pending = 2;
@@ -216,7 +217,8 @@ function update() {
     }
     var picked = pickGames(schedule);
     msg[keys.RefreshMins] = refreshMinutes(picked);
-    setColors(msg, teamColors(info, awayToday(team, schedule)));
+    var awayColors = localStorage.getItem('awayColors') !== '0';
+    setColors(msg, teamColors(info, awayColors && awayToday(team, schedule)));
     function finish(liveScore) {
       var gm = buildGameFields(team, picked, liveScore);
       for (var k in gm) msg[k] = gm[k];
@@ -264,8 +266,8 @@ Pebble.addEventListener('webviewclosed', function(e) {
   if (!e || !e.response) return;
   var settings = clay.getSettings(e.response);
   var team = settings[keys.ConfigTeam];
-  if (teams[team]) {
-    localStorage.setItem('team', team);
-    update();
-  }
+  if (teams[team]) localStorage.setItem('team', team);
+  localStorage.setItem('awayColors', settings[keys.ConfigAwayColors] ? '1' : '0');
+  localStorage.setItem('vibeOnDisconnect', settings[keys.VibeOnDisconnect] ? '1' : '0');
+  update();
 });

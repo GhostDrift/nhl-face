@@ -1,6 +1,7 @@
 #include <pebble.h>
 
 #define PERSIST_KEY_DATA 1
+#define PERSIST_KEY_VIBE 2
 #define DATA_VERSION 4
 
 enum { STATE_NONE = 0, STATE_NEXT = 1, STATE_LIVE = 2, STATE_FINAL = 3 };
@@ -35,6 +36,8 @@ static int s_refresh_countdown;
 static char s_time_buf[8];
 static char s_date_buf[16];
 static bool s_quiet_time;
+static bool s_bt_connected = true;
+static bool s_vibe_on_disconnect;
 static char s_next1_buf[24];
 static char s_next2_buf[32];
 
@@ -168,16 +171,39 @@ static void prv_draw_bubble(GContext *ctx, GRect rect, const char *label, Font l
                 in.size.w, fg);
 }
 
-// A crescent moon on a small tab, set into a pinstripe to show Quiet Time is on.
-static void prv_draw_quiet_tab(GContext *ctx, GPoint center, int r, GColor tab, GColor fg) {
+// Status badges sit on small tabs set into a pinstripe. A badge of radius r
+// fills a tab this wide.
+#define BADGE_TAB_W(r) (2 * (r) + 8)
+
+static void prv_draw_badge_tab(GContext *ctx, GPoint center, int r, GColor tab) {
   graphics_context_set_fill_color(ctx, tab);
-  graphics_fill_rect(ctx, GRect(center.x - r - 4, center.y - r - 1, 2 * r + 8, 2 * r + 3), 3, GCornersAll);
+  graphics_fill_rect(ctx, GRect(center.x - r - 4, center.y - r - 1, BADGE_TAB_W(r), 2 * r + 3), 3, GCornersAll);
+}
+
+// A crescent moon on a tab, to show Quiet Time is on.
+static void prv_draw_quiet_tab(GContext *ctx, GPoint center, int r, GColor tab, GColor fg) {
+  prv_draw_badge_tab(ctx, center, r, tab);
   graphics_context_set_fill_color(ctx, fg);
   graphics_fill_circle(ctx, center, r);
   // Carve the crescent with a slightly smaller circle, offset so it stays inside
   // the tab: its top reaches the tab's top edge (r + 1 above center) and no further.
   graphics_context_set_fill_color(ctx, tab);
   graphics_fill_circle(ctx, GPoint(center.x + r / 2, center.y - 2), r - 1);
+}
+
+// A Bluetooth rune struck through with a slash, on a tab, to show the phone is
+// disconnected.
+static void prv_draw_bt_off_tab(GContext *ctx, GPoint center, int r, GColor tab, GColor fg) {
+  prv_draw_badge_tab(ctx, center, r, tab);
+  const int x = center.x, y = center.y, h = r / 2;
+  graphics_context_set_stroke_color(ctx, fg);
+  graphics_context_set_stroke_width(ctx, 1);
+  graphics_draw_line(ctx, GPoint(x - h, y + h), GPoint(x + h, y - h));
+  graphics_draw_line(ctx, GPoint(x + h, y - h), GPoint(x, y - r));
+  graphics_draw_line(ctx, GPoint(x, y - r), GPoint(x, y + r));
+  graphics_draw_line(ctx, GPoint(x, y + r), GPoint(x + h, y + h));
+  graphics_draw_line(ctx, GPoint(x + h, y + h), GPoint(x - h, y - h));
+  graphics_draw_line(ctx, GPoint(x - r, y - r), GPoint(x + r, y + r));
 }
 
 // A block with a border band in one color around a panel in another, and a
@@ -238,9 +264,20 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
   const int time_bottom = watch_in.origin.y + watch_in.size.h - 1 - band;
   prv_draw_caps(ctx, s_time_buf, time_font, watch_in.origin.x,
                 time_top + (time_bottom - time_top - time_font.cap_h + 1) / 2, watch_in.size.w, panel_fg);
+
+  // Status badges centered side by side in the watch block's bottom pinstripe.
+  const int badge_r = big ? 6 : 4;
+  const int badge_gap = 4;
+  const int badges = s_quiet_time + !s_bt_connected;
+  const int badges_w = badges * BADGE_TAB_W(badge_r) + (badges - 1) * badge_gap;
+  const int badge_y = watch_in.origin.y + watch_in.size.h - 1;
+  int badge_x = watch_in.origin.x + (watch_in.size.w - badges_w) / 2 + BADGE_TAB_W(badge_r) / 2;
+  if (!s_bt_connected) {
+    prv_draw_bt_off_tab(ctx, GPoint(badge_x, badge_y), badge_r, accent, accent_fg);
+    badge_x += BADGE_TAB_W(badge_r) + badge_gap;
+  }
   if (s_quiet_time) {
-    prv_draw_quiet_tab(ctx, GPoint(watch_in.origin.x + watch_in.size.w / 2, watch_in.origin.y + watch_in.size.h - 1),
-                       big ? 6 : 4, accent, accent_fg);
+    prv_draw_quiet_tab(ctx, GPoint(badge_x, badge_y), badge_r, accent, accent_fg);
   }
 
   // Game: live score, final score, or next game
@@ -315,6 +352,14 @@ static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   }
 }
 
+static void prv_bt_handler(bool connected) {
+  s_bt_connected = connected;
+  if (!connected && s_vibe_on_disconnect && !quiet_time_is_active()) {
+    vibes_double_pulse();
+  }
+  layer_mark_dirty(s_canvas);
+}
+
 static void prv_copy_string(char *dest, size_t size, Tuple *t) {
   if (t) {
     strncpy(dest, t->value->cstring, size - 1);
@@ -339,6 +384,11 @@ static void prv_inbox_received(DictionaryIterator *iter, void *context) {
   prv_copy_string(s_data.div_rank, sizeof(s_data.div_rank), dict_find(iter, MESSAGE_KEY_DivRank));
   prv_copy_string(s_data.league_rank, sizeof(s_data.league_rank), dict_find(iter, MESSAGE_KEY_LeagueRank));
   prv_copy_int(&s_data.refresh_mins, dict_find(iter, MESSAGE_KEY_RefreshMins));
+  Tuple *vibe = dict_find(iter, MESSAGE_KEY_VibeOnDisconnect);
+  if (vibe) {
+    s_vibe_on_disconnect = vibe->value->int32 != 0;
+    persist_write_bool(PERSIST_KEY_VIBE, s_vibe_on_disconnect);
+  }
 
   Tuple *state = dict_find(iter, MESSAGE_KEY_GameState);
   if (state) {
@@ -372,6 +422,7 @@ static void prv_window_unload(Window *window) {
 static void prv_init(void) {
   prv_load_data();
   prv_reset_countdown();
+  s_vibe_on_disconnect = persist_read_bool(PERSIST_KEY_VIBE);
 
   s_window = window_create();
   window_set_window_handlers(s_window, (WindowHandlers) {
@@ -381,12 +432,17 @@ static void prv_init(void) {
   window_stack_push(s_window, true);
 
   tick_timer_service_subscribe(MINUTE_UNIT, prv_tick_handler);
+  s_bt_connected = connection_service_peek_pebble_app_connection();
+  connection_service_subscribe((ConnectionHandlers) {
+    .pebble_app_connection_handler = prv_bt_handler,
+  });
   app_message_register_inbox_received(prv_inbox_received);
   app_message_open(512, 64);
 }
 
 static void prv_deinit(void) {
   tick_timer_service_unsubscribe();
+  connection_service_unsubscribe();
   window_destroy(s_window);
 }
 

@@ -24,6 +24,7 @@
     },
     "messageKeys": [
       "ConfigTeam",
+      "ConfigAwayColors",
       "TeamName",
       "ColorTertiary",
       "ColorPrimary",
@@ -42,7 +43,8 @@
       "GameLine1",
       "GameLine2",
       "RefreshMins",
-      "RequestUpdate"
+      "RequestUpdate",
+      "VibeOnDisconnect"
     ],
     "resources": {
       "media": []

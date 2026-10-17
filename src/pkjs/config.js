@@ -25,6 +25,20 @@ module.exports = [
         label: 'Team',
         defaultValue: 'BOS',
         options: options
+      },
+      {
+        type: 'toggle',
+        messageKey: 'ConfigAwayColors',
+        label: 'Away colors on away game days',
+        description: 'White with your team color, like the road jersey.',
+        defaultValue: true
+      },
+      {
+        type: 'toggle',
+        messageKey: 'VibeOnDisconnect',
+        label: 'Vibrate when the phone disconnects',
+        description: 'Skipped while Quiet Time is on.',
+        defaultValue: false
       }
     ]
   },
