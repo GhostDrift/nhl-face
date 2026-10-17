@@ -1,6 +1,7 @@
 // NHL team colors: primary (background, block panels), secondary (block borders, bubbles),
 // tertiary (pinstripes). Tertiary sits between the other two, so it differs from both.
-// The watch maps these to the nearest of its 64 colors.
+// The watch maps these to the nearest of its 64 colors; a few are picked straight
+// from that palette because the official color maps to the wrong hue (SJS, NYI).
 module.exports = {
   ANA: { name: 'Ducks',          primary: 0xF47A38, secondary: 0x000000, tertiary: 0xA2AAAD },
   BOS: { name: 'Bruins',         primary: 0xFFB81C, secondary: 0x000000, tertiary: 0xFFFFFF },
@@ -19,13 +20,13 @@ module.exports = {
   MTL: { name: 'Canadiens',      primary: 0xAF1E2D, secondary: 0x192168, tertiary: 0xFFFFFF },
   NJD: { name: 'Devils',         primary: 0xCE1126, secondary: 0x000000, tertiary: 0xFFFFFF },
   NSH: { name: 'Predators',      primary: 0xFFB81C, secondary: 0x041E42, tertiary: 0xFFFFFF },
-  NYI: { name: 'Islanders',      primary: 0x00539B, secondary: 0xF47D30, tertiary: 0xFFFFFF },
+  NYI: { name: 'Islanders',      primary: 0x0055FF, secondary: 0xF47D30, tertiary: 0xFFFFFF },
   NYR: { name: 'Rangers',        primary: 0x0038A8, secondary: 0xCE1126, tertiary: 0xFFFFFF },
   OTT: { name: 'Senators',       primary: 0xC52032, secondary: 0xC2912C, tertiary: 0x000000 },
   PHI: { name: 'Flyers',         primary: 0xF74902, secondary: 0x000000, tertiary: 0xFFFFFF },
   PIT: { name: 'Penguins',       primary: 0x000000, secondary: 0xFCB514, tertiary: 0xFFFFFF },
   SEA: { name: 'Kraken',         primary: 0x001628, secondary: 0x99D9D9, tertiary: 0xE9072B },
-  SJS: { name: 'Sharks',         primary: 0x006D75, secondary: 0xEA7200, tertiary: 0x000000 },
+  SJS: { name: 'Sharks',         primary: 0x0055AA, secondary: 0xEA7200, tertiary: 0x000000 },
   STL: { name: 'Blues',          primary: 0x002F87, secondary: 0xFCB514, tertiary: 0xFFFFFF },
   TBL: { name: 'Lightning',      primary: 0x002868, secondary: 0xFFFFFF, tertiary: 0x000000 },
   TOR: { name: 'Maple Leafs',    primary: 0x00205B, secondary: 0xFFFFFF, tertiary: 0x000000 },

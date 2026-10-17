@@ -148,30 +148,38 @@ static void prv_draw_stripe_label(GContext *ctx, const char *text, Font font, in
   prv_draw_text(ctx, text, font.key, rect, color);
 }
 
-// A filled, pinstriped bubble with a label tab in its top stripe and a value inside.
+// How far a bubble's pinstripe sits inside its edge.
+#define BUBBLE_STRIPE_INSET 2
+
+// A filled bubble with a pinstripe just inside its edge, a label tab in the top
+// stripe, and a value inside.
 static void prv_draw_bubble(GContext *ctx, GRect rect, const char *label, Font label_font,
                             const char *value, Font value_font, GColor fill, GColor stripe, GColor fg) {
+  GRect in = grect_inset(rect, GEdgeInsets(BUBBLE_STRIPE_INSET));
   graphics_context_set_fill_color(ctx, fill);
-  graphics_fill_rect(ctx, rect, 4, GCornersAll);
+  graphics_fill_rect(ctx, rect, 5, GCornersAll);
   graphics_context_set_stroke_color(ctx, stripe);
-  graphics_draw_round_rect(ctx, rect, 4);
-  prv_draw_stripe_label(ctx, label, label_font, rect.origin.x, rect.origin.y, rect.size.w, true, fill, fg);
-  const int below_label = rect.origin.y + (label_font.cap_h + 1) / 2;
-  const int bottom = rect.origin.y + rect.size.h;
-  prv_draw_caps(ctx, value, value_font, rect.origin.x, (below_label + bottom - value_font.cap_h + 1) / 2,
-                rect.size.w, fg);
+  graphics_draw_round_rect(ctx, in, 3);
+  prv_draw_stripe_label(ctx, label, label_font, in.origin.x, in.origin.y, in.size.w, true, fill, fg);
+  const int below_label = in.origin.y + (label_font.cap_h + 1) / 2;
+  const int bottom = in.origin.y + in.size.h - 1;
+  prv_draw_caps(ctx, value, value_font, in.origin.x, (below_label + bottom - value_font.cap_h + 1) / 2,
+                in.size.w, fg);
 }
 
-// A block with a border color outside its pinstripe and a panel color inside it.
-static void prv_draw_block(GContext *ctx, GRect rect, int inset, GColor border, GColor panel, GColor stripe) {
-  GRect inner = grect_inset(rect, GEdgeInsets(inset));
+// A block with a border band in one color around a panel in another, and a
+// pinstripe running inside the band, inset pixels in from the edge and band
+// pixels out from the panel.
+static void prv_draw_block(GContext *ctx, GRect rect, int inset, int band, GColor border, GColor panel,
+                           GColor stripe) {
+  GRect line = grect_inset(rect, GEdgeInsets(inset));
   graphics_context_set_fill_color(ctx, border);
   graphics_fill_rect(ctx, rect, 8, GCornersAll);
   graphics_context_set_fill_color(ctx, panel);
-  graphics_fill_rect(ctx, inner, 4, GCornersAll);
+  graphics_fill_rect(ctx, grect_inset(line, GEdgeInsets(band)), 3, GCornersAll);
   graphics_context_set_stroke_color(ctx, stripe);
   graphics_context_set_stroke_width(ctx, 1);
-  graphics_draw_round_rect(ctx, inner, 4);
+  graphics_draw_round_rect(ctx, line, 5);
 }
 
 static void prv_canvas_update(Layer *layer, GContext *ctx) {
@@ -199,8 +207,10 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
   GRect nhl = GRect(m, split + (m + 1) / 2, w - 2 * m, h - split - (m + 1) / 2 - m);
   // Deep enough that a label centered on the stripe stays inside the block.
   const int inset = big ? 6 : 5;
-  prv_draw_block(ctx, watch, inset, accent, panel, stripe);
-  prv_draw_block(ctx, nhl, inset, accent, panel, stripe);
+  // How far the border band continues past the pinstripe.
+  const int band = big ? 3 : 2;
+  prv_draw_block(ctx, watch, inset, band, accent, panel, stripe);
+  prv_draw_block(ctx, nhl, inset, band, accent, panel, stripe);
 
   const Font label_font = big ? FONT_18_BOLD : FONT_14_BOLD;
   const Font value_font = big ? FONT_24_BOLD : FONT_18_BOLD;
@@ -212,7 +222,7 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
                         watch_in.size.w - 16, true, accent, accent_fg);
   const Font time_font = big ? FONT_TIME_BIG : FONT_TIME_SMALL;
   const int time_top = watch_in.origin.y + label_half;
-  const int time_bottom = watch_in.origin.y + watch_in.size.h - 1;
+  const int time_bottom = watch_in.origin.y + watch_in.size.h - 1 - band;
   prv_draw_caps(ctx, s_time_buf, time_font, watch_in.origin.x,
                 time_top + (time_bottom - time_top - time_font.cap_h + 1) / 2, watch_in.size.w, panel_fg);
 
@@ -237,12 +247,13 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
   // the game, then RECORD | PTS, then division | NHL.
   const int pad = big ? 5 : 4;
   const int gap = big ? 6 : 4;
-  const int bubble_h = label_half + value_font.cap_h + (big ? 9 : 5);
+  const int bubble_h = 2 * BUBBLE_STRIPE_INSET + label_half + value_font.cap_h + (big ? 8 : 3);
   const int bx = inner.origin.x + pad;
   const int bw = inner.size.w - 2 * pad;
-  // Label tabs reach one pixel above the label's capitals.
-  const int tab_half = label_half + 1;
-  const int avail = inner.size.h - 1 - label_half;
+  // Label tabs reach one pixel above the label's capitals, which are centered on
+  // the bubble's pinstripe.
+  const int tab_half = label_half + 1 - BUBBLE_STRIPE_INSET;
+  const int avail = inner.size.h - 1 - band - label_half;
   const int spare = avail - 3 * (bubble_h + tab_half);
   const int space = spare / 4;
   const int extra = spare % 4;

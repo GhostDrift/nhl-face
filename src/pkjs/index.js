@@ -41,6 +41,41 @@ function textColorFor(rgb) {
   return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? 0x000000 : 0xFFFFFF;
 }
 
+function colorDistance(a, b) {
+  var dr = ((a >> 16) & 0xFF) - ((b >> 16) & 0xFF);
+  var dg = ((a >> 8) & 0xFF) - ((b >> 8) & 0xFF);
+  var db = (a & 0xFF) - (b & 0xFF);
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
+
+// Home colors normally; on the day of an away game, the away-jersey look: white where
+// the main color goes, the main color where the second color goes, and a pinstripe
+// that stands out from both.
+function teamColors(info, away) {
+  if (!away) {
+    return { primary: info.primary, secondary: info.secondary, tertiary: info.tertiary };
+  }
+  var primary = 0xFFFFFF, secondary = info.primary;
+  var tertiary = 0x000000;
+  var candidates = [info.secondary, info.tertiary];
+  for (var i = 0; i < candidates.length; i++) {
+    var c = candidates[i];
+    if (colorDistance(c, primary) > 100 && colorDistance(c, secondary) > 100) {
+      tertiary = c;
+      break;
+    }
+  }
+  return { primary: primary, secondary: secondary, tertiary: tertiary };
+}
+
+function setColors(msg, colors) {
+  msg[keys.ColorPrimary] = colors.primary;
+  msg[keys.ColorSecondary] = colors.secondary;
+  msg[keys.ColorTertiary] = colors.tertiary;
+  msg[keys.ColorText] = textColorFor(colors.primary);
+  msg[keys.ColorText2] = textColorFor(colors.secondary);
+}
+
 function ordinal(n) {
   return n + (['th', 'st', 'nd', 'rd'][n] || 'th');
 }
@@ -62,6 +97,15 @@ function scoreLine(game) {
 
 function isLive(state) { return state === 'LIVE' || state === 'CRIT'; }
 function isDone(state) { return state === 'FINAL' || state === 'OFF'; }
+
+// True when the team plays an away game today, phone local time.
+function awayToday(team, schedule) {
+  var today = new Date().toDateString();
+  return schedule.games.some(function(g) {
+    return g.gameScheduleState !== 'CNCL' && g.awayTeam.abbrev === team &&
+           new Date(Date.parse(g.startTimeUTC)).toDateString() === today;
+  });
+}
 
 // Picks the game to show: a live one, a recently finished one, or the next one.
 function pickGames(schedule) {
@@ -155,11 +199,7 @@ function update() {
   var info = teams[team];
   var msg = {};
   msg[keys.TeamName] = info.name.toUpperCase();
-  msg[keys.ColorPrimary] = info.primary;
-  msg[keys.ColorSecondary] = info.secondary;
-  msg[keys.ColorTertiary] = info.tertiary;
-  msg[keys.ColorText] = textColorFor(info.primary);
-  msg[keys.ColorText2] = textColorFor(info.secondary);
+  setColors(msg, teamColors(info, false));
 
   var pending = 2;
   var standings = null, schedule = null;
@@ -176,6 +216,7 @@ function update() {
     }
     var picked = pickGames(schedule);
     msg[keys.RefreshMins] = refreshMinutes(picked);
+    setColors(msg, teamColors(info, awayToday(team, schedule)));
     function finish(liveScore) {
       var gm = buildGameFields(team, picked, liveScore);
       for (var k in gm) msg[k] = gm[k];
