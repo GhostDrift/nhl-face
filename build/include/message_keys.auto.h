@@ -12,6 +12,7 @@ extern uint32_t MESSAGE_KEY_ColorTertiary;
 extern uint32_t MESSAGE_KEY_ColorText;
 extern uint32_t MESSAGE_KEY_ColorText2;
 extern uint32_t MESSAGE_KEY_ConfigAwayColors;
+extern uint32_t MESSAGE_KEY_ConfigGoalNotify;
 extern uint32_t MESSAGE_KEY_ConfigTeam;
 extern uint32_t MESSAGE_KEY_ConfigVibeOnFinal;
 extern uint32_t MESSAGE_KEY_ConfigVibeOnGoal;

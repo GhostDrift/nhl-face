@@ -37,7 +37,14 @@ module.exports = [
         type: 'toggle',
         messageKey: 'ConfigVibeOnGoal',
         label: 'Vibrate when your team scores',
-        description: 'Checked once a minute during games. Skipped while Quiet Time is on.',
+        description: 'Checked every 20 seconds during games. Skipped while Quiet Time is on.',
+        defaultValue: false
+      },
+      {
+        type: 'toggle',
+        messageKey: 'ConfigGoalNotify',
+        label: 'Goal notifications',
+        description: 'A notification with the scorer, assists, and score when your team scores.',
         defaultValue: false
       },
       {

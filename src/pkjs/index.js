@@ -12,6 +12,10 @@ var BUZZ_PERIOD = 1, BUZZ_FINAL = 2;
 // Game stages, in order: before puck drop, then each period in play (odd) and the
 // intermission after it (even), then final.
 var STAGE_PREGAME = 0, STAGE_FINAL = 99;
+// While a game is live, check the scoreboard this often between the regular
+// once-a-minute updates. The NHL feed is cached for about this long, so faster
+// polling would just fetch the same data again.
+var LIVE_POLL_MS = 20 * 1000;
 // Show a finished game's final score until this long after puck drop.
 var FINAL_WINDOW_MS = 6 * 60 * 60 * 1000;
 
@@ -191,16 +195,56 @@ function buildStandingsFields(team, standings) {
   return msg;
 }
 
-// True when the team's score in this game went up since the last check. The first
-// look at a game only records its score, so joining mid-game doesn't buzz.
+// How many goals the team scored in this game since the last check. The first look
+// at a game only records its score, so joining mid-game doesn't count.
 function teamScored(team, game) {
-  if (!game) return false;
+  if (!game) return 0;
   var side = game.homeTeam.abbrev === team ? game.homeTeam : game.awayTeam;
   var score = side.score || 0;
   var last = null;
   try { last = JSON.parse(localStorage.getItem('lastScore')); } catch (e) {}
   localStorage.setItem('lastScore', JSON.stringify({ id: game.id, score: score }));
-  return !!last && last.id === game.id && score > last.score;
+  return last && last.id === game.id && score > last.score ? score - last.score : 0;
+}
+
+function abbrevOf(team) {
+  return typeof team === 'string' ? team : team && team['default'];
+}
+
+// Notification title and body for one goal from the scoreboard's goal list.
+function goalNotification(game, goal) {
+  var tags = [];
+  if (goal.strength === 'pp') tags.push('PP');
+  if (goal.strength === 'sh') tags.push('SH');
+  if (goal.goalModifier === 'empty-net') tags.push('EN');
+  var assists = (goal.assists || []).map(function(a) { return a.name['default']; });
+  var body = goal.name['default'] + (assists.length ? ' (' + assists.join(', ') + ')' : ' (unassisted)') +
+             '\n' + periodLabel(goal.periodDescriptor) + ' ' + goal.timeInPeriod +
+             (tags.length ? ' ' + tags.join(' ') : '') +
+             '\n' + game.awayTeam.abbrev + ' ' + goal.awayScore + '  @  ' + game.homeTeam.abbrev + ' ' + goal.homeScore;
+  return { title: abbrevOf(goal.teamAbbrev) + ' GOAL!', body: body };
+}
+
+// Shows a notification for each of the team's last count goals in the game.
+function notifyGoals(team, game, count) {
+  var mine = (game.goals || []).filter(function(g) { return abbrevOf(g.teamAbbrev) === team; });
+  mine.slice(-count).forEach(function(goal) {
+    var n = goalNotification(game, goal);
+    Pebble.showSimpleNotificationOnPebble(n.title, n.body);
+  });
+}
+
+// Calls back with the scoreboard entry, including its goal list, for a game.
+function getScoreboardGame(game, callback) {
+  getJSON(API + '/score/' + game.gameDate, function(err, data) {
+    var found = null;
+    if (!err) {
+      data.games.forEach(function(g) {
+        if (g.id === game.id) found = g;
+      });
+    }
+    callback(found);
+  });
 }
 
 // The tracked game's current stage, or null when it can't be told this update.
@@ -227,6 +271,69 @@ function stageBuzz(picked, liveScore) {
   if (!last || last.id !== cur.id || cur.stage <= last.stage) return 0;
   if (cur.stage === STAGE_FINAL) return last.stage > STAGE_PREGAME ? BUZZ_FINAL : 0;
   return cur.stage % 2 === 1 ? BUZZ_PERIOD : 0;
+}
+
+// Runs the goal, period, and final checks for a game and adds whatever the watch
+// should buzz for to msg; goal notifications are sent directly. liveScore is the
+// game's scoreboard entry, if fetched. Returns true if anything happened.
+function gameEvents(team, picked, liveScore, msg) {
+  // Include the just-finished game so a game-ending goal still counts.
+  var game = picked.live || picked.recent;
+  var scored = teamScored(team, liveScore || game);
+  if (scored && localStorage.getItem('vibeOnGoal') === '1') msg[keys.GoalScored] = 1;
+  if (scored && localStorage.getItem('goalNotify') === '1') {
+    if (liveScore && liveScore.goals) {
+      notifyGoals(team, liveScore, scored);
+    } else {
+      getScoreboardGame(game, function(found) {
+        if (found) notifyGoals(team, found, scored);
+      });
+    }
+  }
+  var buzz = stageBuzz(picked, liveScore);
+  if ((buzz === BUZZ_PERIOD && localStorage.getItem('vibeOnPeriod') === '1') ||
+      (buzz === BUZZ_FINAL && localStorage.getItem('vibeOnFinal') === '1')) {
+    msg[keys.GameBuzz] = buzz;
+  }
+  return scored > 0 || buzz !== 0;
+}
+
+// The live game being polled between regular updates, if any.
+var livePoll = null;
+
+function stopLivePoll() {
+  if (livePoll) clearTimeout(livePoll.timer);
+  livePoll = null;
+}
+
+// Polls the scoreboard for a live game and messages the watch only when there's a
+// goal, a new period, or the final horn. Once the game ends, does a full update.
+function startLivePoll(team, game) {
+  if (livePoll && livePoll.team === team && livePoll.id === game.id) return;
+  stopLivePoll();
+  var poll = livePoll = { team: team, id: game.id, timer: null };
+  function tick() {
+    getScoreboardGame(game, function(found) {
+      if (livePoll !== poll) return;
+      var over = found && isDone(found.gameState);
+      if (found && (isLive(found.gameState) || over)) {
+        var picked = over ? { recent: found } : { live: found };
+        var msg = {};
+        if (gameEvents(team, picked, found, msg)) {
+          var gm = buildGameFields(team, picked, found);
+          for (var k in gm) msg[k] = gm[k];
+          sendToWatch(msg);
+        }
+      }
+      if (over) {
+        stopLivePoll();
+        update();
+      } else {
+        poll.timer = setTimeout(tick, LIVE_POLL_MS);
+      }
+    });
+  }
+  poll.timer = setTimeout(tick, LIVE_POLL_MS);
 }
 
 function sendToWatch(msg) {
@@ -265,30 +372,17 @@ function update() {
     function finish(liveScore) {
       var gm = buildGameFields(team, picked, liveScore);
       for (var k in gm) msg[k] = gm[k];
-      // Include the just-finished game so a game-ending goal still counts.
-      var scored = teamScored(team, liveScore || picked.live || picked.recent);
-      if (scored && localStorage.getItem('vibeOnGoal') === '1') msg[keys.GoalScored] = 1;
-      var buzz = stageBuzz(picked, liveScore);
-      if ((buzz === BUZZ_PERIOD && localStorage.getItem('vibeOnPeriod') === '1') ||
-          (buzz === BUZZ_FINAL && localStorage.getItem('vibeOnFinal') === '1')) {
-        msg[keys.GameBuzz] = buzz;
-      }
+      gameEvents(team, picked, liveScore, msg);
       sendToWatch(msg);
     }
     if (!picked.live) {
+      stopLivePoll();
       finish(null);
       return;
     }
+    startLivePoll(team, picked.live);
     // The schedule lacks the period clock, so get it from the daily scoreboard.
-    getJSON(API + '/score/' + picked.live.gameDate, function(err, data) {
-      var found = null;
-      if (!err) {
-        data.games.forEach(function(g) {
-          if (g.id === picked.live.id) found = g;
-        });
-      }
-      finish(found);
-    });
+    getScoreboardGame(picked.live, finish);
   }
 
   getJSON(API + '/standings/now', function(err, data) {
@@ -320,6 +414,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
   if (teams[team]) localStorage.setItem('team', team);
   localStorage.setItem('awayColors', settings[keys.ConfigAwayColors] ? '1' : '0');
   localStorage.setItem('vibeOnGoal', settings[keys.ConfigVibeOnGoal] ? '1' : '0');
+  localStorage.setItem('goalNotify', settings[keys.ConfigGoalNotify] ? '1' : '0');
   localStorage.setItem('vibeOnPeriod', settings[keys.ConfigVibeOnPeriod] ? '1' : '0');
   localStorage.setItem('vibeOnFinal', settings[keys.ConfigVibeOnFinal] ? '1' : '0');
   localStorage.setItem('vibeOnDisconnect', settings[keys.VibeOnDisconnect] ? '1' : '0');
