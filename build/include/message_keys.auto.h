@@ -38,5 +38,6 @@ extern uint32_t MESSAGE_KEY_Points;
 extern uint32_t MESSAGE_KEY_Record;
 extern uint32_t MESSAGE_KEY_RefreshMins;
 extern uint32_t MESSAGE_KEY_RequestUpdate;
+extern uint32_t MESSAGE_KEY_TeamAbbrev;
 extern uint32_t MESSAGE_KEY_TeamName;
 extern uint32_t MESSAGE_KEY_VibeOnDisconnect;

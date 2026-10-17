@@ -434,6 +434,7 @@ function update() {
   var info = teams[team];
   var msg = {};
   msg[keys.TeamName] = info.name.toUpperCase();
+  msg[keys.TeamAbbrev] = team;
   msg[keys.VibeOnDisconnect] = localStorage.getItem('vibeOnDisconnect') === '1' ? 1 : 0;
   setColors(msg, teamColors(info, false));
 

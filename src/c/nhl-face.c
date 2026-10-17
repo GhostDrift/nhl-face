@@ -1,8 +1,9 @@
 #include <pebble.h>
+#include "logos.h"
 
 #define PERSIST_KEY_DATA 1
 #define PERSIST_KEY_VIBE 2
-#define DATA_VERSION 4
+#define DATA_VERSION 5
 
 enum { STATE_NONE = 0, STATE_NEXT = 1, STATE_LIVE = 2, STATE_FINAL = 3 };
 enum { BUZZ_PERIOD = 1, BUZZ_FINAL = 2 };
@@ -12,6 +13,7 @@ enum { GOAL_MINE = 1, GOAL_OPP = 2 };
 typedef struct {
   uint8_t version;
   char team_name[20];
+  char team_abbrev[4];
   int32_t primary;
   int32_t secondary;
   int32_t tertiary;
@@ -52,6 +54,8 @@ static char s_goal_scorer[32];
 static char s_goal_assists[64];
 static char s_goal_time[24];
 static char s_goal_score[24];
+// The team's logo, loaded while the banner is up. Color watches only.
+static GBitmap *s_logo;
 
 static GColor prv_color(int32_t hex, GColor bw) {
   return PBL_IF_COLOR_ELSE(GColorFromHEX(hex), bw);
@@ -233,6 +237,48 @@ static void prv_draw_block(GContext *ctx, GRect rect, int inset, int band, GColo
   graphics_draw_round_rect(ctx, line, 5);
 }
 
+// A color one step from a toward b in each channel where they differ: the
+// faintest visible tint of a toward b.
+static GColor prv_tint(GColor a, GColor b) {
+  GColor c = a;
+  c.r += (b.r > a.r) - (b.r < a.r);
+  c.g += (b.g > a.g) - (b.g < a.g);
+  c.b += (b.b > a.b) - (b.b < a.b);
+  return c;
+}
+
+static void prv_load_logo(void) {
+#ifdef PBL_COLOR
+  if (s_logo) return;
+  for (unsigned i = 0; i < ARRAY_LENGTH(LOGOS); i++) {
+    if (strcmp(LOGOS[i].abbr, s_data.team_abbrev) == 0) {
+      s_logo = gbitmap_create_with_resource(LOGOS[i].resource);
+      return;
+    }
+  }
+#endif
+}
+
+static void prv_unload_logo(void) {
+  if (s_logo) gbitmap_destroy(s_logo);
+  s_logo = NULL;
+}
+
+// The team's logo, faintly tinted from the panel toward fg, centered in rect.
+static void prv_draw_logo(GContext *ctx, GRect rect, GColor panel, GColor fg) {
+  if (!s_logo) return;
+  // The logo's palette is transparent plus one color, which takes the tint.
+  GColor *palette = gbitmap_get_palette(s_logo);
+  for (int i = 0; i < 2; i++) {
+    if (palette[i].a) palette[i] = prv_tint(panel, fg);
+  }
+  GSize size = gbitmap_get_bounds(s_logo).size;
+  graphics_context_set_compositing_mode(ctx, GCompOpSet);
+  graphics_draw_bitmap_in_rect(ctx, s_logo, GRect(rect.origin.x + (rect.size.w - size.w) / 2,
+                                                  rect.origin.y + (rect.size.h - size.h) / 2, size.w, size.h));
+  graphics_context_set_compositing_mode(ctx, GCompOpAssign);
+}
+
 // One line of the goal banner, which may wrap onto up to max_lines lines.
 typedef struct {
   const char *text;
@@ -247,7 +293,7 @@ static void prv_draw_goal_banner(GContext *ctx, GRect rect, bool big, GColor fg)
   const BannerLine lines[] = {
     { "GOAL!", big ? FONT_KEY_GOTHIC_28_BOLD : FONT_KEY_GOTHIC_24_BOLD, 1, big ? 28 : 24 },
     { s_goal_scorer, big ? FONT_KEY_GOTHIC_24_BOLD : FONT_KEY_GOTHIC_18_BOLD, 1, big ? 24 : 18 },
-    { s_goal_assists, big ? FONT_KEY_GOTHIC_18 : FONT_KEY_GOTHIC_14, 2, big ? 18 : 14 },
+    { s_goal_assists, big ? FONT_KEY_GOTHIC_18_BOLD : FONT_KEY_GOTHIC_14_BOLD, 2, big ? 18 : 14 },
     { s_goal_time, big ? FONT_KEY_GOTHIC_18_BOLD : FONT_KEY_GOTHIC_14_BOLD, 1, big ? 18 : 14 },
     { s_goal_score, big ? FONT_KEY_GOTHIC_24_BOLD : FONT_KEY_GOTHIC_18_BOLD, 1, big ? 24 : 18 },
   };
@@ -348,12 +394,13 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
 
   GRect inner = grect_inset(nhl, GEdgeInsets(inset));
   if (s_banner_timer) {
-    // The goal banner fills everything inside the pinstripe, under the team name.
-    graphics_context_set_fill_color(ctx, accent);
-    graphics_fill_rect(ctx, grect_inset(inner, GEdgeInsets(1)), 4, GCornersAll);
+    // The goal banner takes the whole panel, below the team name.
+    GRect panel_rect = grect_inset(inner, GEdgeInsets(band));
     const int top = inner.origin.y + label_half + 1;
-    prv_draw_goal_banner(ctx, GRect(inner.origin.x + 4, top, inner.size.w - 8, inner.origin.y + inner.size.h - 2 - top),
-                         big, accent_fg);
+    GRect area = GRect(panel_rect.origin.x + 2, top, panel_rect.size.w - 4,
+                       panel_rect.origin.y + panel_rect.size.h - 1 - top);
+    prv_draw_logo(ctx, area, panel, panel_fg);
+    prv_draw_goal_banner(ctx, area, big, panel_fg);
   }
 
   // Team name set into the NHL block's top pinstripe.
@@ -444,6 +491,7 @@ static void prv_copy_int(int32_t *dest, Tuple *t) {
 
 static void prv_banner_timeout(void *context) {
   s_banner_timer = NULL;
+  prv_unload_logo();
   layer_mark_dirty(s_canvas);
 }
 
@@ -465,11 +513,19 @@ static void prv_show_goal_banner(DictionaryIterator *iter) {
   if (!s_banner_timer || !app_timer_reschedule(s_banner_timer, ms)) {
     s_banner_timer = app_timer_register(ms, prv_banner_timeout, NULL);
   }
+  prv_load_logo();
   if (!quiet_time_is_active()) light_enable_interaction();
 }
 
 static void prv_inbox_received(DictionaryIterator *iter, void *context) {
   prv_copy_string(s_data.team_name, sizeof(s_data.team_name), dict_find(iter, MESSAGE_KEY_TeamName));
+  Tuple *abbrev = dict_find(iter, MESSAGE_KEY_TeamAbbrev);
+  if (abbrev && strcmp(abbrev->value->cstring, s_data.team_abbrev) != 0) {
+    // A different team: its logo replaces the old one next time the banner shows.
+    prv_copy_string(s_data.team_abbrev, sizeof(s_data.team_abbrev), abbrev);
+    prv_unload_logo();
+    if (s_banner_timer) prv_load_logo();
+  }
   prv_copy_int(&s_data.primary, dict_find(iter, MESSAGE_KEY_ColorPrimary));
   prv_copy_int(&s_data.secondary, dict_find(iter, MESSAGE_KEY_ColorSecondary));
   prv_copy_int(&s_data.tertiary, dict_find(iter, MESSAGE_KEY_ColorTertiary));
@@ -536,6 +592,7 @@ static void prv_window_load(Window *window) {
 }
 
 static void prv_window_unload(Window *window) {
+  prv_unload_logo();
   layer_destroy(s_canvas);
 }
 
