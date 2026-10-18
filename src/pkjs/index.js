@@ -180,8 +180,13 @@ function refreshMinutes(picked, liveScore) {
   return 30;
 }
 
+// The stat bubbles: RECORD and PTS, then the division and league ranks. Their
+// labels are sent too, since the playoffs use them for other stats.
 function buildStandingsFields(team, standings) {
   var msg = {};
+  msg[keys.RecordLabel] = 'RECORD';
+  msg[keys.PointsLabel] = 'PTS';
+  msg[keys.LeagueLabel] = 'NHL';
   var row = null;
   standings.standings.forEach(function(s) {
     if (s.teamAbbrev.default === team) row = s;
@@ -199,6 +204,97 @@ function buildStandingsFields(team, standings) {
     msg[keys.DivRank] = '';
     msg[keys.LeagueRank] = '';
   }
+  return msg;
+}
+
+// The season whose playoffs the team is in, once its regular season is over: its
+// schedule has playoff games and no regular season games left. Else null.
+function playoffSeason(schedule) {
+  var playoff = null;
+  for (var i = 0; i < schedule.games.length; i++) {
+    var g = schedule.games[i];
+    if (g.gameType === 2 && !isDone(g.gameState) && g.gameScheduleState !== 'CNCL') return null;
+    if (g.gameType === 3) playoff = g;
+  }
+  return playoff && playoff.season;
+}
+
+// Playoff labels for the big screen, and shorter ones that fit the others.
+var PLAYOFF_LABELS = {
+  big: { rounds: ['ROUND 1', 'ROUND 2', 'CONF FINAL', 'CUP FINAL'], game: 'GAME', record: 'PLAYOFFS', champs: 'CHAMPS' },
+  small: { rounds: ['ROUND 1', 'ROUND 2', 'ROUND 3', 'FINAL'], game: 'GM', record: 'TOTAL', champs: 'WON' }
+};
+
+function bigScreen() {
+  var info = Pebble.getActiveWatchInfo && Pebble.getActiveWatchInfo();
+  return !!info && info.platform === 'emery';
+}
+
+// The team's series in the season's bracket, in round order: the round, its wins
+// (mine) and its opponent's (opp), and the wins needed to take the series.
+function teamSeries(team, bracket) {
+  var series = [];
+  bracket.rounds.forEach(function(round) {
+    round.series.forEach(function(s) {
+      if (!s.topSeed || !s.bottomSeed) return;
+      var top = s.topSeed.abbrev === team;
+      if (!top && s.bottomSeed.abbrev !== team) return;
+      series.push({
+        round: s.roundNumber,
+        mine: (top ? s.topSeed : s.bottomSeed).wins || 0,
+        opp: (top ? s.bottomSeed : s.topSeed).wins || 0,
+        needed: s.neededToWin || 4
+      });
+    });
+  });
+  return series;
+}
+
+// Where the team's season stands, for the game bubble when there's no game to show,
+// as its two lines: eliminated, between playoff rounds, Cup champions, or into the
+// playoffs before they start. Null if none of those.
+function seasonStatus(team, standings, bracket) {
+  var series = bracket ? teamSeries(team, bracket) : [];
+  if (series.length) {
+    var cur = series[series.length - 1];
+    if (cur.opp >= cur.needed) return ['PLAYOFFS', 'ELIMINATED'];
+    if (cur.mine < cur.needed) return null;
+    return cur.round >= PLAYOFF_LABELS.big.rounds.length ? ['STANLEY CUP', 'CHAMPIONS'] : ['NEXT ROUND', 'TBD'];
+  }
+  var row = standings && standings.standings.filter(function(s) { return s.teamAbbrev.default === team; })[0];
+  // The standings mark teams that can't make the playoffs e, and ones that have x, y, z, or p.
+  if (!row || !row.clinchIndicator) return null;
+  return ['PLAYOFFS', row.clinchIndicator === 'e' ? 'ELIMINATED' : 'CLINCHED'];
+}
+
+// The stat bubbles during the playoffs, from the season's bracket: the latest series'
+// round and standing, the game number in it, the playoff record, and the wins left
+// to win the Cup. Null if the team isn't in the bracket.
+function buildPlayoffFields(team, bracket, picked) {
+  var series = teamSeries(team, bracket);
+  if (!series.length) return null;
+  var won = 0, lost = 0, toCup = 0, cur = series[series.length - 1];
+  series.forEach(function(s) {
+    won += s.mine;
+    lost += s.opp;
+  });
+  var labels = bigScreen() ? PLAYOFF_LABELS.big : PLAYOFF_LABELS.small;
+  // Every round takes the same number of wins.
+  toCup = labels.rounds.length * cur.needed - won;
+  var standing = cur.mine >= cur.needed ? 'WON' : cur.opp >= cur.needed ? 'LOST' :
+                 cur.mine > cur.opp ? 'LEAD' : cur.mine < cur.opp ? 'DOWN' : 'TIED';
+  // The game on now or next in the series, if it's scheduled.
+  var game = picked.live || picked.next;
+  var number = game && game.gameType === 3 && game.seriesStatus && game.seriesStatus.gameNumberOfSeries;
+  var msg = {};
+  msg[keys.RecordLabel] = labels.rounds[cur.round - 1] || 'ROUND ' + cur.round;
+  msg[keys.Record] = standing + ' ' + cur.mine + '-' + cur.opp;
+  msg[keys.PointsLabel] = labels.game;
+  msg[keys.Points] = standing === 'WON' || standing === 'LOST' || !number ? '-' : String(number);
+  msg[keys.DivName] = labels.record;
+  msg[keys.DivRank] = won + '-' + lost;
+  msg[keys.LeagueLabel] = toCup === 0 ? 'CUP' : 'TO CUP';
+  msg[keys.LeagueRank] = toCup === 0 ? labels.champs : standing === 'LOST' ? 'OUT' : String(toCup);
   return msg;
 }
 
@@ -469,12 +565,32 @@ function update() {
       sendToWatch(msg);
       return;
     }
+    var season = playoffSeason(schedule);
+    if (!season) {
+      showGame(null);
+      return;
+    }
+    getJSON(API + '/playoff-series/carousel/' + season + '/', function(err, data) {
+      if (err) console.log(err.message);
+      showGame(err ? null : data);
+    });
+  }
+  // Adds the game, and the playoff stats from bracket if given, and sends it all.
+  function showGame(bracket) {
     var picked = pickGames(schedule);
+    var playoffs = bracket && buildPlayoffFields(team, bracket, picked);
+    for (var p in playoffs) msg[p] = playoffs[p];
     var awayColors = localStorage.getItem('awayColors') !== '0';
     colors.applyScheme(msg, scheme, awayColors && awayToday(team, schedule));
     function finish(liveScore) {
       msg[keys.RefreshMins] = refreshMinutes(picked, liveScore);
       var gm = buildGameFields(team, picked, liveScore);
+      // With no game to show, say where the season stands instead.
+      var status = gm[keys.GameState] === STATE_NONE && seasonStatus(team, standings, bracket);
+      if (status) {
+        gm[keys.GameLine1] = status[0];
+        gm[keys.GameLine2] = status[1];
+      }
       for (var k in gm) msg[k] = gm[k];
       gameEvents(team, picked, liveScore, msg);
       sendToWatch(msg);

@@ -3,7 +3,7 @@
 
 #define PERSIST_KEY_DATA 1
 #define PERSIST_KEY_VIBE 2
-#define DATA_VERSION 6
+#define DATA_VERSION 7
 
 enum { STATE_NONE = 0, STATE_NEXT = 1, STATE_LIVE = 2, STATE_FINAL = 3 };
 enum { BUZZ_PERIOD = 1, BUZZ_FINAL = 2 };
@@ -20,11 +20,15 @@ typedef struct {
   int32_t text;
   int32_t text2;
   int32_t label;
+  // The stat bubbles: labels and values.
+  char record_label[12];
   char record[16];
+  char points_label[8];
   char points[6];
-  char div_name[6];
-  char div_rank[6];
-  char league_rank[6];
+  char div_name[10];
+  char div_rank[8];
+  char league_label[8];
+  char league_rank[8];
   int32_t game_state;
   int32_t game_start;
   char opp[6];
@@ -454,7 +458,8 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
     prv_format_next();
     line1 = s_next1_buf;
     line2 = s_next2_buf;
-  } else if (s_data.game_state == STATE_NONE && s_data.record[0]) {
+  } else if (s_data.game_state == STATE_NONE && !s_data.line1[0] && s_data.record[0]) {
+    // Unless the phone sent something to say instead, such as being eliminated.
     line1 = "NO GAMES";
     line2 = "SCHEDULED";
   }
@@ -510,13 +515,16 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
 
   const int record_w = (bw - gap) * 5 / 8;
   const int col_w = (bw - gap) / 2;
-  prv_draw_bubble(ctx, GRect(bx, row1_y, record_w, bubble_h), "RECORD", label_font,
+  prv_draw_bubble(ctx, GRect(bx, row1_y, record_w, bubble_h),
+                  s_data.record_label[0] ? s_data.record_label : "RECORD", label_font,
                   s_data.record, value_font, accent, stripe, tab_fg, accent_fg);
-  prv_draw_bubble(ctx, GRect(bx + record_w + gap, row1_y, bw - record_w - gap, bubble_h), "PTS", label_font,
+  prv_draw_bubble(ctx, GRect(bx + record_w + gap, row1_y, bw - record_w - gap, bubble_h),
+                  s_data.points_label[0] ? s_data.points_label : "PTS", label_font,
                   s_data.points, value_font, accent, stripe, tab_fg, accent_fg);
   prv_draw_bubble(ctx, GRect(bx, row2_y, col_w, bubble_h), s_data.div_name[0] ? s_data.div_name : "DIV",
                   label_font, s_data.div_rank, value_font, accent, stripe, tab_fg, accent_fg);
-  prv_draw_bubble(ctx, GRect(bx + bw - col_w, row2_y, col_w, bubble_h), "NHL", label_font,
+  prv_draw_bubble(ctx, GRect(bx + bw - col_w, row2_y, col_w, bubble_h),
+                  s_data.league_label[0] ? s_data.league_label : "NHL", label_font,
                   s_data.league_rank, value_font, accent, stripe, tab_fg, accent_fg);
 }
 
@@ -655,6 +663,9 @@ static void prv_inbox_received(DictionaryIterator *iter, void *context) {
   prv_copy_int(&s_data.text, dict_find(iter, MESSAGE_KEY_ColorText));
   prv_copy_int(&s_data.text2, dict_find(iter, MESSAGE_KEY_ColorText2));
   prv_copy_int(&s_data.label, dict_find(iter, MESSAGE_KEY_ColorLabel));
+  prv_copy_string(s_data.record_label, sizeof(s_data.record_label), dict_find(iter, MESSAGE_KEY_RecordLabel));
+  prv_copy_string(s_data.points_label, sizeof(s_data.points_label), dict_find(iter, MESSAGE_KEY_PointsLabel));
+  prv_copy_string(s_data.league_label, sizeof(s_data.league_label), dict_find(iter, MESSAGE_KEY_LeagueLabel));
   prv_copy_string(s_data.record, sizeof(s_data.record), dict_find(iter, MESSAGE_KEY_Record));
   prv_copy_string(s_data.points, sizeof(s_data.points), dict_find(iter, MESSAGE_KEY_Points));
   prv_copy_string(s_data.div_name, sizeof(s_data.div_name), dict_find(iter, MESSAGE_KEY_DivName));
