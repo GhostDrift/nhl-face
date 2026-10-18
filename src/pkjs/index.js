@@ -18,6 +18,12 @@ var STAGE_PREGAME = 0, STAGE_FINAL = 99;
 // once-a-minute updates. The NHL feed is cached for about this long, so faster
 // polling would just fetch the same data again.
 var LIVE_POLL_MS = 20 * 1000;
+// Start polling for puck drop this long before the scheduled start. The season
+// schedule is slow to show a game as live, so the scoreboard is what's watched.
+var PUCK_DROP_WATCH_MS = 15 * 60 * 1000;
+// During intermission, check this often until its last few minutes.
+var INTERMISSION_POLL_MS = 2 * 60 * 1000;
+var INTERMISSION_END_SECS = 150;
 // How long the watch shows the goal banner unless set otherwise.
 var GOAL_BANNER_SECS = 30;
 // Show a finished game's final score until this long after puck drop.
@@ -168,8 +174,16 @@ function buildGameFields(team, picked, liveScore) {
   return msg;
 }
 
-function refreshMinutes(picked) {
-  if (picked.live) return 1;
+// True when the game is about to start, or should have and isn't live yet.
+function nearStart(game) {
+  return !!game && Date.parse(game.startTimeUTC) - Date.now() < PUCK_DROP_WATCH_MS;
+}
+
+function refreshMinutes(picked, liveScore) {
+  if (picked.live) {
+    var clock = liveScore && liveScore.clock;
+    return clock && clock.inIntermission ? 5 : 1;
+  }
   if (picked.next) {
     var mins = (Date.parse(picked.next.startTimeUTC) - Date.now()) / 60000;
     if (mins < 60) return 5;
@@ -391,8 +405,19 @@ function stopLivePoll() {
   livePoll = null;
 }
 
-// Polls the scoreboard for a live game and messages the watch only when there's a
-// goal, a period starting or ending, or the final horn. Once the game ends, does a full update.
+// How long until the next scoreboard check: less often through most of an
+// intermission, since nothing happens until the next period starts.
+function pollDelay(found) {
+  var clock = found && isLive(found.gameState) && found.clock;
+  if (clock && clock.inIntermission && clock.secondsRemaining > INTERMISSION_END_SECS) {
+    return Math.min(INTERMISSION_POLL_MS, (clock.secondsRemaining - INTERMISSION_END_SECS) * 1000);
+  }
+  return LIVE_POLL_MS;
+}
+
+// Polls the scoreboard for a live or about-to-start game and messages the watch only
+// when there's puck drop, a goal, a period starting or ending, or the final horn. Once
+// the game ends, does a full update.
 function startLivePoll(team, game) {
   if (livePoll && livePoll.team === team && livePoll.id === game.id) return;
   stopLivePoll();
@@ -407,6 +432,7 @@ function startLivePoll(team, game) {
         if (gameEvents(team, picked, found, msg)) {
           var gm = buildGameFields(team, picked, found);
           for (var k in gm) msg[k] = gm[k];
+          msg[keys.RefreshMins] = refreshMinutes(picked, found);
           sendToWatch(msg);
         }
       }
@@ -414,7 +440,7 @@ function startLivePoll(team, game) {
         stopLivePoll();
         update();
       } else {
-        poll.timer = setTimeout(tick, LIVE_POLL_MS);
+        poll.timer = setTimeout(tick, pollDelay(found));
       }
     });
   }
@@ -452,23 +478,28 @@ function update() {
       return;
     }
     var picked = pickGames(schedule);
-    msg[keys.RefreshMins] = refreshMinutes(picked);
     var awayColors = localStorage.getItem('awayColors') !== '0';
     setColors(msg, teamColors(info, awayColors && awayToday(team, schedule)));
     function finish(liveScore) {
+      msg[keys.RefreshMins] = refreshMinutes(picked, liveScore);
       var gm = buildGameFields(team, picked, liveScore);
       for (var k in gm) msg[k] = gm[k];
       gameEvents(team, picked, liveScore, msg);
       sendToWatch(msg);
     }
-    if (!picked.live) {
+    var game = picked.live || (nearStart(picked.next) && picked.next);
+    if (!game) {
       stopLivePoll();
       finish(null);
       return;
     }
-    startLivePoll(team, picked.live);
-    // The schedule lacks the period clock, so get it from the daily scoreboard.
-    getScoreboardGame(picked.live, finish);
+    startLivePoll(team, game);
+    // The schedule lacks the period clock and lags at puck drop, so check the
+    // daily scoreboard too.
+    getScoreboardGame(game, function(found) {
+      if (!picked.live && found && isLive(found.gameState)) picked = { live: found };
+      finish(picked.live ? found : null);
+    });
   }
 
   getJSON(API + '/standings/now', function(err, data) {
