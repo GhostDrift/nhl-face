@@ -77,9 +77,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_ANA",
+                "file": "images/logo_color_ANA.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_ANA",
+                "file": "images/logo_color_dark_ANA.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_BOS",
                 "file": "images/logo_BOS.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_BOS",
+                "file": "images/logo_color_BOS.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_BOS",
+                "file": "images/logo_color_dark_BOS.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -99,9 +143,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_BUF",
+                "file": "images/logo_color_BUF.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_BUF",
+                "file": "images/logo_color_dark_BUF.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_CAR",
                 "file": "images/logo_CAR.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_CAR",
+                "file": "images/logo_color_CAR.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_CAR",
+                "file": "images/logo_color_dark_CAR.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -121,9 +209,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_CBJ",
+                "file": "images/logo_color_CBJ.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_CBJ",
+                "file": "images/logo_color_dark_CBJ.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_CGY",
                 "file": "images/logo_CGY.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_CGY",
+                "file": "images/logo_color_CGY.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_CGY",
+                "file": "images/logo_color_dark_CGY.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -143,9 +275,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_CHI",
+                "file": "images/logo_color_CHI.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_CHI",
+                "file": "images/logo_color_dark_CHI.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_COL",
                 "file": "images/logo_COL.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_COL",
+                "file": "images/logo_color_COL.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_COL",
+                "file": "images/logo_color_dark_COL.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -165,9 +341,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_DAL",
+                "file": "images/logo_color_DAL.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_DAL",
+                "file": "images/logo_color_dark_DAL.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_DET",
                 "file": "images/logo_DET.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DET",
+                "file": "images/logo_color_DET.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_DET",
+                "file": "images/logo_color_dark_DET.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -187,9 +407,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_EDM",
+                "file": "images/logo_color_EDM.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_EDM",
+                "file": "images/logo_color_dark_EDM.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_FLA",
                 "file": "images/logo_FLA.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_FLA",
+                "file": "images/logo_color_FLA.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_FLA",
+                "file": "images/logo_color_dark_FLA.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -209,9 +473,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_LAK",
+                "file": "images/logo_color_LAK.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_LAK",
+                "file": "images/logo_color_dark_LAK.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_MIN",
                 "file": "images/logo_MIN.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_MIN",
+                "file": "images/logo_color_MIN.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_MIN",
+                "file": "images/logo_color_dark_MIN.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -231,9 +539,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_MTL",
+                "file": "images/logo_color_MTL.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_MTL",
+                "file": "images/logo_color_dark_MTL.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_NJD",
                 "file": "images/logo_NJD.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_NJD",
+                "file": "images/logo_color_NJD.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_NJD",
+                "file": "images/logo_color_dark_NJD.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -253,9 +605,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_NSH",
+                "file": "images/logo_color_NSH.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_NSH",
+                "file": "images/logo_color_dark_NSH.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_NYI",
                 "file": "images/logo_NYI.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_NYI",
+                "file": "images/logo_color_NYI.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_NYI",
+                "file": "images/logo_color_dark_NYI.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -275,9 +671,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_NYR",
+                "file": "images/logo_color_NYR.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_NYR",
+                "file": "images/logo_color_dark_NYR.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_OTT",
                 "file": "images/logo_OTT.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_OTT",
+                "file": "images/logo_color_OTT.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_OTT",
+                "file": "images/logo_color_dark_OTT.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -297,9 +737,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_PHI",
+                "file": "images/logo_color_PHI.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_PHI",
+                "file": "images/logo_color_dark_PHI.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_PIT",
                 "file": "images/logo_PIT.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_PIT",
+                "file": "images/logo_color_PIT.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_PIT",
+                "file": "images/logo_color_dark_PIT.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -319,9 +803,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_SEA",
+                "file": "images/logo_color_SEA.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_SEA",
+                "file": "images/logo_color_dark_SEA.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_SJS",
                 "file": "images/logo_SJS.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_SJS",
+                "file": "images/logo_color_SJS.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_SJS",
+                "file": "images/logo_color_dark_SJS.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -341,9 +869,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_STL",
+                "file": "images/logo_color_STL.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_STL",
+                "file": "images/logo_color_dark_STL.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_TBL",
                 "file": "images/logo_TBL.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_TBL",
+                "file": "images/logo_color_TBL.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_TBL",
+                "file": "images/logo_color_dark_TBL.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -363,9 +935,42 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_TOR",
+                "file": "images/logo_color_TOR.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_TOR",
+                "file": "images/logo_color_dark_TOR.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_UTA",
                 "file": "images/logo_UTA.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_UTA",
+                "file": "images/logo_color_UTA.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -385,9 +990,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_VAN",
+                "file": "images/logo_color_VAN.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_VAN",
+                "file": "images/logo_color_dark_VAN.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_VGK",
                 "file": "images/logo_VGK.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_VGK",
+                "file": "images/logo_color_VGK.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_VGK",
+                "file": "images/logo_color_dark_VGK.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",
@@ -407,9 +1056,53 @@
             },
             {
                 "type": "bitmap",
+                "name": "LOGO_COLOR_WPG",
+                "file": "images/logo_color_WPG.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_WPG",
+                "file": "images/logo_color_dark_WPG.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
                 "name": "LOGO_WSH",
                 "file": "images/logo_WSH.png",
                 "memoryFormat": "1BitPalette",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_WSH",
+                "file": "images/logo_color_WSH.png",
+                "memoryFormat": "Smallest",
+                "storageFormat": "png",
+                "targetPlatforms": [
+                    "basalt",
+                    "emery"
+                ]
+            },
+            {
+                "type": "bitmap",
+                "name": "LOGO_COLOR_DARK_WSH",
+                "file": "images/logo_color_dark_WSH.png",
+                "memoryFormat": "Smallest",
                 "storageFormat": "png",
                 "targetPlatforms": [
                     "basalt",

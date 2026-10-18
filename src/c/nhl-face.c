@@ -55,8 +55,15 @@ static char s_goal_scorer[32];
 static char s_goal_assists[64];
 static char s_goal_time[24];
 static char s_goal_score[24];
-// The team's logo, loaded while the banner is up. Color watches only.
+// The team's logo, shown faintly behind the goal banner. Color watches only.
 static GBitmap *s_logo;
+// How long a wrist flick swaps the NHL block between the logo and the game and standings.
+#define FLICK_SECS 10
+// Runs while a wrist flick has the NHL block swapped.
+static AppTimer *s_flick_timer;
+// The team's logo in color, loaded while the NHL block shows it, and its resource.
+static GBitmap *s_color_logo;
+static uint32_t s_color_logo_res;
 #ifdef PREVIEW
 // Preview build: which team color scheme is up, shown in the date tab.
 static char s_preview_label[24];
@@ -258,7 +265,7 @@ static void prv_load_logo(void) {
   if (s_logo) return;
   for (unsigned i = 0; i < ARRAY_LENGTH(LOGOS); i++) {
     if (strcmp(LOGOS[i].abbr, s_data.team_abbrev) == 0) {
-      s_logo = gbitmap_create_with_resource(LOGOS[i].resource);
+      s_logo = gbitmap_create_with_resource(LOGOS[i].faded);
       return;
     }
   }
@@ -270,6 +277,39 @@ static void prv_unload_logo(void) {
   s_logo = NULL;
 }
 
+static void prv_unload_color_logo(void) {
+  if (s_color_logo) gbitmap_destroy(s_color_logo);
+  s_color_logo = NULL;
+  s_color_logo_res = 0;
+}
+
+// Loads the color logo for the current team and panel, the NHL's version for dark
+// backgrounds if the panel is dark, replacing one loaded for another team or panel.
+static void prv_load_color_logo(void) {
+#ifdef PBL_COLOR
+  const GColor panel = prv_color(s_data.primary, GColorBlack);
+  const bool dark = panel.r * 299 + panel.g * 587 + panel.b * 114 < 1500;
+  for (unsigned i = 0; i < ARRAY_LENGTH(LOGOS); i++) {
+    if (strcmp(LOGOS[i].abbr, s_data.team_abbrev) == 0) {
+      const uint32_t res = dark && LOGOS[i].color_dark ? LOGOS[i].color_dark : LOGOS[i].color;
+      if (res == s_color_logo_res) return;
+      prv_unload_color_logo();
+      s_color_logo = gbitmap_create_with_resource(res);
+      if (s_color_logo) s_color_logo_res = res;
+      return;
+    }
+  }
+#endif
+}
+
+static void prv_draw_centered(GContext *ctx, GBitmap *bitmap, GRect rect) {
+  GSize size = gbitmap_get_bounds(bitmap).size;
+  graphics_context_set_compositing_mode(ctx, GCompOpSet);
+  graphics_draw_bitmap_in_rect(ctx, bitmap, GRect(rect.origin.x + (rect.size.w - size.w) / 2,
+                                                  rect.origin.y + (rect.size.h - size.h) / 2, size.w, size.h));
+  graphics_context_set_compositing_mode(ctx, GCompOpAssign);
+}
+
 // The team's logo, faintly tinted from the panel toward fg, centered in rect.
 static void prv_draw_logo(GContext *ctx, GRect rect, GColor panel, GColor fg) {
   if (!s_logo) return;
@@ -278,11 +318,26 @@ static void prv_draw_logo(GContext *ctx, GRect rect, GColor panel, GColor fg) {
   for (int i = 0; i < 2; i++) {
     if (palette[i].a) palette[i] = prv_tint(panel, fg);
   }
-  GSize size = gbitmap_get_bounds(s_logo).size;
-  graphics_context_set_compositing_mode(ctx, GCompOpSet);
-  graphics_draw_bitmap_in_rect(ctx, s_logo, GRect(rect.origin.x + (rect.size.w - size.w) / 2,
-                                                  rect.origin.y + (rect.size.h - size.h) / 2, size.w, size.h));
-  graphics_context_set_compositing_mode(ctx, GCompOpAssign);
+  prv_draw_centered(ctx, s_logo, rect);
+}
+
+// True when the team plays today: its next game is today, or a game is on or just over.
+static bool prv_game_today(void) {
+  switch (s_data.game_state) {
+    case STATE_LIVE:
+    case STATE_FINAL:
+      return true;
+    case STATE_NEXT:
+      return s_data.game_start < time_start_of_today() + SECONDS_PER_DAY;
+    default:
+      return false;
+  }
+}
+
+// Whether the NHL block shows the logo instead of the game and standings: on days
+// without a game, and on game days only while a wrist flick has it swapped.
+static bool prv_show_logo(void) {
+  return s_logo && prv_game_today() == (s_flick_timer != NULL);
 }
 
 // One line of the goal banner, which may wrap onto up to max_lines lines.
@@ -405,20 +460,32 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
   }
 
   GRect inner = grect_inset(nhl, GEdgeInsets(inset));
-  if (s_banner_timer) {
-    // The goal banner takes the whole panel, below the team name.
+  const bool panel_only = s_banner_timer || prv_show_logo();
+  if (panel_only && !s_banner_timer) {
+    prv_load_color_logo();
+  } else {
+    prv_unload_color_logo();
+  }
+  if (panel_only) {
+    // The logo, and the goal banner over it, take the whole panel below the team name.
     GRect panel_rect = grect_inset(inner, GEdgeInsets(band));
     const int top = inner.origin.y + label_half + 1;
     GRect area = GRect(panel_rect.origin.x + 2, top, panel_rect.size.w - 4,
                        panel_rect.origin.y + panel_rect.size.h - 1 - top);
-    prv_draw_logo(ctx, area, panel, panel_fg);
-    prv_draw_goal_banner(ctx, area, big, panel_fg);
+    if (s_banner_timer) {
+      prv_draw_logo(ctx, area, panel, panel_fg);
+      prv_draw_goal_banner(ctx, area, big, panel_fg);
+    } else if (s_color_logo) {
+      prv_draw_centered(ctx, s_color_logo, area);
+    } else {
+      prv_draw_logo(ctx, area, panel, panel_fg);
+    }
   }
 
   // Team name set into the NHL block's top pinstripe.
   prv_draw_stripe_label(ctx, s_data.team_name, label_font, inner.origin.x + 8, inner.origin.y,
                         inner.size.w - 16, true, accent, tab_fg);
-  if (s_banner_timer) return;
+  if (panel_only) return;
 
   // Three rows of bubbles spaced evenly below the team name:
   // the game, then RECORD | PTS, then division | NHL.
@@ -503,9 +570,27 @@ static void prv_copy_int(int32_t *dest, Tuple *t) {
 
 static void prv_banner_timeout(void *context) {
   s_banner_timer = NULL;
-  prv_unload_logo();
   layer_mark_dirty(s_canvas);
 }
+
+#ifdef PBL_COLOR
+static void prv_flick_timeout(void *context) {
+  s_flick_timer = NULL;
+  layer_mark_dirty(s_canvas);
+}
+
+// A wrist flick swaps the NHL block between the logo and the game and standings
+// for a few seconds, or swaps it back early.
+static void prv_tap_handler(AccelAxisType axis, int32_t direction) {
+  if (s_flick_timer) {
+    app_timer_cancel(s_flick_timer);
+    s_flick_timer = NULL;
+  } else {
+    s_flick_timer = app_timer_register(FLICK_SECS * 1000, prv_flick_timeout, NULL);
+  }
+  layer_mark_dirty(s_canvas);
+}
+#endif
 
 // Shows the goal banner if the phone sent one, restarting its timer. A score
 // sent on its own updates the banner already up.
@@ -525,7 +610,6 @@ static void prv_show_goal_banner(DictionaryIterator *iter) {
   if (!s_banner_timer || !app_timer_reschedule(s_banner_timer, ms)) {
     s_banner_timer = app_timer_register(ms, prv_banner_timeout, NULL);
   }
-  prv_load_logo();
   if (!quiet_time_is_active()) light_enable_interaction();
 }
 
@@ -560,10 +644,10 @@ static void prv_inbox_received(DictionaryIterator *iter, void *context) {
   prv_copy_string(s_data.team_name, sizeof(s_data.team_name), dict_find(iter, MESSAGE_KEY_TeamName));
   Tuple *abbrev = dict_find(iter, MESSAGE_KEY_TeamAbbrev);
   if (abbrev && strcmp(abbrev->value->cstring, s_data.team_abbrev) != 0) {
-    // A different team: its logo replaces the old one next time the banner shows.
+    // A different team: its logo replaces the old one.
     prv_copy_string(s_data.team_abbrev, sizeof(s_data.team_abbrev), abbrev);
     prv_unload_logo();
-    if (s_banner_timer) prv_load_logo();
+    prv_load_logo();
   }
   prv_copy_int(&s_data.primary, dict_find(iter, MESSAGE_KEY_ColorPrimary));
   prv_copy_int(&s_data.secondary, dict_find(iter, MESSAGE_KEY_ColorSecondary));
@@ -628,11 +712,13 @@ static void prv_window_load(Window *window) {
   s_canvas = layer_create(layer_get_bounds(root));
   layer_set_update_proc(s_canvas, prv_canvas_update);
   layer_add_child(root, s_canvas);
+  prv_load_logo();
   prv_update_time();
 }
 
 static void prv_window_unload(Window *window) {
   prv_unload_logo();
+  prv_unload_color_logo();
   layer_destroy(s_canvas);
 }
 
@@ -652,6 +738,10 @@ static void prv_init(void) {
   window_stack_push(s_window, true);
 
   tick_timer_service_subscribe(MINUTE_UNIT, prv_tick_handler);
+#ifdef PBL_COLOR
+  // Only color watches have the logo to swap to.
+  accel_tap_service_subscribe(prv_tap_handler);
+#endif
   s_bt_connected = connection_service_peek_pebble_app_connection();
   connection_service_subscribe((ConnectionHandlers) {
     .pebble_app_connection_handler = prv_bt_handler,
@@ -662,6 +752,9 @@ static void prv_init(void) {
 
 static void prv_deinit(void) {
   tick_timer_service_unsubscribe();
+#ifdef PBL_COLOR
+  accel_tap_service_unsubscribe();
+#endif
   connection_service_unsubscribe();
   window_destroy(s_window);
 }
