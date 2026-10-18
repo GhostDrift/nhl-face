@@ -15,6 +15,7 @@ Run from the project root:
 """
 import io
 import json
+import math
 from collections import Counter
 import re
 import urllib.request
@@ -70,31 +71,47 @@ def quantize(im):
     return out
 
 
-def lab(rgb):
-    """CIE L*a*b*, where distances match how different colors look."""
+def oklab(rgb):
+    """OKLab: lightness, then green-red and blue-yellow, where distances match how
+    different colors look, blues included."""
     def linear(c):
         c /= 255
         return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
     r, g, b = (linear(c) for c in rgb)
-    xyz = (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.9505, 0.2126 * r + 0.7152 * g + 0.0722 * b, \
-          (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.089
-    f = [t ** (1 / 3) if t > 0.008856 else 7.787 * t + 16 / 116 for t in xyz]
-    return 116 * f[1] - 16, 500 * (f[0] - f[1]), 200 * (f[1] - f[2])
+    l = (0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b) ** (1 / 3)
+    m = (0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b) ** (1 / 3)
+    s = (0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b) ** (1 / 3)
+    return (0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+            1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+            0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s)
+
+
+def distance(a, b):
+    """How different two OKLab colors look, with hue counting double so a color
+    keeps its hue on the watch, such as the Avalanche's burgundy staying red."""
+    ca, cb = math.hypot(a[1], a[2]), math.hypot(b[1], b[2])
+    hue = max((a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2 - (ca - cb) ** 2, 0)
+    return (a[0] - b[0]) ** 2 + (ca - cb) ** 2 + 2 * hue
 
 
 def nearest(rgb, colors):
-    target = lab(rgb)
-    return min(colors, key=lambda c: sum((a - b) ** 2 for a, b in zip(lab(c), target)))
+    target = oklab(rgb)
+    return min(colors, key=lambda c: distance(oklab(c), target))
 
 
 # The watch's 64 colors: each channel 0x00, 0x55, 0xAA, or 0xFF.
 WATCH_COLORS = [(r, g, b) for r in (0, 85, 170, 255) for g in (0, 85, 170, 255) for b in (0, 85, 170, 255)]
+WATCH_GRAYS = [(v, v, v) for v in (0, 85, 170, 255)]
+# Colors this close to gray take a watch gray, so near-blacks don't turn blue.
+GRAY_CHROMA = 0.03
 
 
 def watch_color(rgb, cache={}):
-    # The watch color that looks closest.
+    """The watch color that looks closest. src/pkjs/colors.js converts team colors
+    the same way, so the face and the logos match."""
     if rgb not in cache:
-        cache[rgb] = nearest(rgb, WATCH_COLORS)
+        L, a, b = oklab(rgb)
+        cache[rgb] = nearest(rgb, WATCH_GRAYS if math.hypot(a, b) < GRAY_CHROMA else WATCH_COLORS)
     return cache[rgb]
 
 
