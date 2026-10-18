@@ -6,6 +6,7 @@
 // DO NOT MODIFY - CHANGES WILL BE OVERWRITTEN
 //
 
+extern uint32_t MESSAGE_KEY_ColorLabel;
 extern uint32_t MESSAGE_KEY_ColorPrimary;
 extern uint32_t MESSAGE_KEY_ColorSecondary;
 extern uint32_t MESSAGE_KEY_ColorTertiary;
@@ -13,6 +14,19 @@ extern uint32_t MESSAGE_KEY_ColorText;
 extern uint32_t MESSAGE_KEY_ColorText2;
 extern uint32_t MESSAGE_KEY_ConfigAwayColors;
 extern uint32_t MESSAGE_KEY_ConfigBannerSecs;
+extern uint32_t MESSAGE_KEY_ConfigClassicANA;
+extern uint32_t MESSAGE_KEY_ConfigClassicBUF;
+extern uint32_t MESSAGE_KEY_ConfigClassicCAR;
+extern uint32_t MESSAGE_KEY_ConfigClassicDAL;
+extern uint32_t MESSAGE_KEY_ConfigClassicEDM;
+extern uint32_t MESSAGE_KEY_ConfigClassicLAK;
+extern uint32_t MESSAGE_KEY_ConfigClassicNJD;
+extern uint32_t MESSAGE_KEY_ConfigClassicNYI;
+extern uint32_t MESSAGE_KEY_ConfigClassicPIT;
+extern uint32_t MESSAGE_KEY_ConfigClassicTBL;
+extern uint32_t MESSAGE_KEY_ConfigClassicVAN;
+extern uint32_t MESSAGE_KEY_ConfigClassicWPG;
+extern uint32_t MESSAGE_KEY_ConfigClassicWSH;
 extern uint32_t MESSAGE_KEY_ConfigGoalNotify;
 extern uint32_t MESSAGE_KEY_ConfigTeam;
 extern uint32_t MESSAGE_KEY_ConfigVibeOnFinal;

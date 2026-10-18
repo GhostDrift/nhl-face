@@ -14,6 +14,22 @@ var options = Object.keys(teams).map(function(abbr) {
   return { label: places[abbr] + ' ' + teams[abbr].name, value: abbr };
 }).sort(function(a, b) { return a.label < b.label ? -1 : 1; });
 
+// A Classic colors picker for each team that has older schemes. The settings page
+// shows only the one for the picked team.
+var classicItems = Object.keys(teams).filter(function(abbr) {
+  return teams[abbr].classics;
+}).map(function(abbr) {
+  return {
+    type: 'select',
+    messageKey: 'ConfigClassic' + abbr,
+    label: 'Classic colors',
+    defaultValue: 'current',
+    options: [{ label: 'Current', value: 'current' }].concat(teams[abbr].classics.map(function(c) {
+      return { label: c.name, value: c.id };
+    }))
+  };
+});
+
 module.exports = [
   { type: 'heading', defaultValue: 'NHL Face' },
   {
@@ -25,7 +41,8 @@ module.exports = [
         label: 'Team',
         defaultValue: 'BOS',
         options: options
-      },
+      }
+    ].concat(classicItems, [
       {
         type: 'toggle',
         messageKey: 'ConfigAwayColors',
@@ -91,7 +108,7 @@ module.exports = [
         description: 'Skipped while Quiet Time is on.',
         defaultValue: false
       }
-    ]
+    ])
   },
   { type: 'submit', defaultValue: 'Save' }
 ];

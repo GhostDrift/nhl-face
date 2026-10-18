@@ -1,9 +1,26 @@
 var Clay = require('pebble-clay');
 var clayConfig = require('./config');
 var teams = require('./teams');
+var colors = require('./colors');
 var keys = require('message_keys');
 
-var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
+// Runs in the settings page: shows only the picked team's Classic colors option.
+function clayCustom() {
+  var clay = this;
+  function sync() {
+    var team = clay.getItemByMessageKey('ConfigTeam').get();
+    clay.getAllItems().forEach(function(item) {
+      if (!/^ConfigClassic/.test(item.messageKey || '')) return;
+      if (item.messageKey === 'ConfigClassic' + team) item.show(); else item.hide();
+    });
+  }
+  clay.on(clay.EVENTS.AFTER_BUILD, function() {
+    clay.getItemByMessageKey('ConfigTeam').on('change', sync);
+    sync();
+  });
+}
+
+var clay = new Clay(clayConfig, clayCustom, { autoHandleEvents: false });
 
 var API = 'https://api-web.nhle.com/v1';
 var STATE_NONE = 0, STATE_NEXT = 1, STATE_LIVE = 2, STATE_FINAL = 3;
@@ -54,45 +71,14 @@ function getJSON(url, callback) {
   xhr.send();
 }
 
-// Black or white text, whichever reads better on the given background.
-function textColorFor(rgb) {
-  var r = (rgb >> 16) & 0xFF, g = (rgb >> 8) & 0xFF, b = rgb & 0xFF;
-  return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? 0x000000 : 0xFFFFFF;
-}
-
-function colorDistance(a, b) {
-  var dr = ((a >> 16) & 0xFF) - ((b >> 16) & 0xFF);
-  var dg = ((a >> 8) & 0xFF) - ((b >> 8) & 0xFF);
-  var db = (a & 0xFF) - (b & 0xFF);
-  return Math.sqrt(dr * dr + dg * dg + db * db);
-}
-
-// Home colors normally; on the day of an away game, the away-jersey look: white where
-// the main color goes, the main color where the second color goes, and a pinstripe
-// that stands out from both.
-function teamColors(info, away) {
-  if (!away) {
-    return { primary: info.primary, secondary: info.secondary, tertiary: info.tertiary };
-  }
-  var primary = 0xFFFFFF, secondary = info.primary;
-  var tertiary = 0x000000;
-  var candidates = [info.secondary, info.tertiary];
-  for (var i = 0; i < candidates.length; i++) {
-    var c = candidates[i];
-    if (colorDistance(c, primary) > 100 && colorDistance(c, secondary) > 100) {
-      tertiary = c;
-      break;
-    }
-  }
-  return { primary: primary, secondary: secondary, tertiary: tertiary };
-}
-
-function setColors(msg, colors) {
-  msg[keys.ColorPrimary] = colors.primary;
-  msg[keys.ColorSecondary] = colors.secondary;
-  msg[keys.ColorTertiary] = colors.tertiary;
-  msg[keys.ColorText] = textColorFor(colors.primary);
-  msg[keys.ColorText2] = textColorFor(colors.secondary);
+// The team's colors: its current ones, or the classic scheme picked in settings.
+function teamScheme(team) {
+  var info = teams[team];
+  var id = localStorage.getItem('classic' + team);
+  // Before the Classic colors picker, the Kings had a toggle for their 1998 scheme.
+  if (!id && team === 'LAK' && localStorage.getItem('kingsClassic') === '1') id = '1998';
+  var picked = (info.classics || []).filter(function(c) { return c.id === id; })[0];
+  return picked || info;
 }
 
 function ordinal(n) {
@@ -462,7 +448,8 @@ function update() {
   msg[keys.TeamName] = info.name.toUpperCase();
   msg[keys.TeamAbbrev] = team;
   msg[keys.VibeOnDisconnect] = localStorage.getItem('vibeOnDisconnect') === '1' ? 1 : 0;
-  setColors(msg, teamColors(info, false));
+  var scheme = teamScheme(team);
+  colors.applyScheme(msg, scheme, false);
 
   var pending = 2;
   var standings = null, schedule = null;
@@ -479,7 +466,7 @@ function update() {
     }
     var picked = pickGames(schedule);
     var awayColors = localStorage.getItem('awayColors') !== '0';
-    setColors(msg, teamColors(info, awayColors && awayToday(team, schedule)));
+    colors.applyScheme(msg, scheme, awayColors && awayToday(team, schedule));
     function finish(liveScore) {
       msg[keys.RefreshMins] = refreshMinutes(picked, liveScore);
       var gm = buildGameFields(team, picked, liveScore);
@@ -530,6 +517,9 @@ Pebble.addEventListener('webviewclosed', function(e) {
   var team = settings[keys.ConfigTeam];
   if (teams[team]) localStorage.setItem('team', team);
   localStorage.setItem('awayColors', settings[keys.ConfigAwayColors] ? '1' : '0');
+  Object.keys(teams).forEach(function(abbr) {
+    if (teams[abbr].classics) localStorage.setItem('classic' + abbr, settings[keys['ConfigClassic' + abbr]] || 'current');
+  });
   var vibe = settings[keys.ConfigVibeOnGoal];
   localStorage.setItem('goalVibe', vibe === 'mine' || vibe === 'both' ? vibe : 'off');
   var alert = settings[keys.ConfigGoalNotify];

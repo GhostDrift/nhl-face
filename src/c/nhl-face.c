@@ -3,7 +3,7 @@
 
 #define PERSIST_KEY_DATA 1
 #define PERSIST_KEY_VIBE 2
-#define DATA_VERSION 5
+#define DATA_VERSION 6
 
 enum { STATE_NONE = 0, STATE_NEXT = 1, STATE_LIVE = 2, STATE_FINAL = 3 };
 enum { BUZZ_PERIOD = 1, BUZZ_FINAL = 2 };
@@ -19,6 +19,7 @@ typedef struct {
   int32_t tertiary;
   int32_t text;
   int32_t text2;
+  int32_t label;
   char record[16];
   char points[6];
   char div_name[6];
@@ -56,6 +57,10 @@ static char s_goal_time[24];
 static char s_goal_score[24];
 // The team's logo, loaded while the banner is up. Color watches only.
 static GBitmap *s_logo;
+#ifdef PREVIEW
+// Preview build: which team color scheme is up, shown in the date tab.
+static char s_preview_label[24];
+#endif
 
 static GColor prv_color(int32_t hex, GColor bw) {
   return PBL_IF_COLOR_ELSE(GColorFromHEX(hex), bw);
@@ -91,6 +96,7 @@ static void prv_load_data(void) {
     strncpy(s_data.team_name, "NHL", sizeof(s_data.team_name));
     s_data.text = 0xFFFFFF;
     s_data.text2 = 0x000000;
+    s_data.label = 0x000000;
     strncpy(s_data.line1, "LOADING...", sizeof(s_data.line1));
   }
 }
@@ -173,14 +179,14 @@ static void prv_draw_stripe_label(GContext *ctx, const char *text, Font font, in
 
 // A filled bubble with a pinstripe just inside its edge, a label tab in the top
 // stripe, and a value inside.
-static void prv_draw_bubble(GContext *ctx, GRect rect, const char *label, Font label_font,
-                            const char *value, Font value_font, GColor fill, GColor stripe, GColor fg) {
+static void prv_draw_bubble(GContext *ctx, GRect rect, const char *label, Font label_font, const char *value,
+                            Font value_font, GColor fill, GColor stripe, GColor label_fg, GColor fg) {
   GRect in = grect_inset(rect, GEdgeInsets(BUBBLE_STRIPE_INSET));
   graphics_context_set_fill_color(ctx, fill);
   graphics_fill_rect(ctx, rect, 5, GCornersAll);
   graphics_context_set_stroke_color(ctx, stripe);
   graphics_draw_round_rect(ctx, in, 3);
-  prv_draw_stripe_label(ctx, label, label_font, in.origin.x, in.origin.y, in.size.w, true, fill, fg);
+  prv_draw_stripe_label(ctx, label, label_font, in.origin.x, in.origin.y, in.size.w, true, fill, label_fg);
   const int below_label = in.origin.y + (label_font.cap_h + 1) / 2;
   const int bottom = in.origin.y + in.size.h - 1;
   prv_draw_caps(ctx, value, value_font, in.origin.x, (below_label + bottom - value_font.cap_h + 1) / 2,
@@ -335,6 +341,8 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
   const GColor accent = prv_color(s_data.secondary, GColorWhite);
   const GColor accent_fg = prv_color(s_data.text2, GColorBlack);
   const GColor stripe = prv_color(s_data.tertiary, GColorBlack);
+  // Labels set into the pinstripes, on tabs and bubbles of the second color.
+  const GColor tab_fg = prv_color(s_data.label, GColorBlack);
 
   graphics_context_set_fill_color(ctx, bg);
   graphics_fill_rect(ctx, b, 0, GCornerNone);
@@ -357,8 +365,12 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
 
   // Date set into the watch block's top pinstripe, time centered below it.
   GRect watch_in = grect_inset(watch, GEdgeInsets(inset));
-  prv_draw_stripe_label(ctx, s_date_buf, label_font, watch_in.origin.x + 8, watch_in.origin.y,
-                        watch_in.size.w - 16, true, accent, accent_fg);
+  const char *date = s_date_buf;
+#ifdef PREVIEW
+  if (s_preview_label[0]) date = s_preview_label;
+#endif
+  prv_draw_stripe_label(ctx, date, label_font, watch_in.origin.x + 8, watch_in.origin.y,
+                        watch_in.size.w - 16, true, accent, tab_fg);
   const Font time_font = big ? FONT_TIME_BIG : FONT_TIME_SMALL;
   const int time_top = watch_in.origin.y + label_half;
   const int time_bottom = watch_in.origin.y + watch_in.size.h - 1 - band;
@@ -405,7 +417,7 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
 
   // Team name set into the NHL block's top pinstripe.
   prv_draw_stripe_label(ctx, s_data.team_name, label_font, inner.origin.x + 8, inner.origin.y,
-                        inner.size.w - 16, true, accent, accent_fg);
+                        inner.size.w - 16, true, accent, tab_fg);
   if (s_banner_timer) return;
 
   // Three rows of bubbles spaced evenly below the team name:
@@ -427,18 +439,18 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
   const int row2_y = row1_y + bubble_h + space + (extra > 2) + tab_half;
 
   prv_draw_bubble(ctx, GRect(bx, row0_y, bw, bubble_h), line1, label_font, line2, value_font,
-                  accent, stripe, accent_fg);
+                  accent, stripe, tab_fg, accent_fg);
 
   const int record_w = (bw - gap) * 5 / 8;
   const int col_w = (bw - gap) / 2;
   prv_draw_bubble(ctx, GRect(bx, row1_y, record_w, bubble_h), "RECORD", label_font,
-                  s_data.record, value_font, accent, stripe, accent_fg);
+                  s_data.record, value_font, accent, stripe, tab_fg, accent_fg);
   prv_draw_bubble(ctx, GRect(bx + record_w + gap, row1_y, bw - record_w - gap, bubble_h), "PTS", label_font,
-                  s_data.points, value_font, accent, stripe, accent_fg);
+                  s_data.points, value_font, accent, stripe, tab_fg, accent_fg);
   prv_draw_bubble(ctx, GRect(bx, row2_y, col_w, bubble_h), s_data.div_name[0] ? s_data.div_name : "DIV",
-                  label_font, s_data.div_rank, value_font, accent, stripe, accent_fg);
+                  label_font, s_data.div_rank, value_font, accent, stripe, tab_fg, accent_fg);
   prv_draw_bubble(ctx, GRect(bx + bw - col_w, row2_y, col_w, bubble_h), "NHL", label_font,
-                  s_data.league_rank, value_font, accent, stripe, accent_fg);
+                  s_data.league_rank, value_font, accent, stripe, tab_fg, accent_fg);
 }
 
 static void prv_update_time(void) {
@@ -517,7 +529,34 @@ static void prv_show_goal_banner(DictionaryIterator *iter) {
   if (!quiet_time_is_active()) light_enable_interaction();
 }
 
+#ifdef PREVIEW
+// Preview build (tools/preview.sh): the buttons ask the phone for the next or
+// previous team color scheme, or to flip home and away.
+static void prv_preview_step(int step) {
+  DictionaryIterator *iter;
+  if (app_message_outbox_begin(&iter) != APP_MSG_OK) return;
+  dict_write_int8(iter, MESSAGE_KEY_PreviewStep, step);
+  app_message_outbox_send();
+}
+
+static void prv_preview_up(ClickRecognizerRef recognizer, void *context) { prv_preview_step(-1); }
+static void prv_preview_down(ClickRecognizerRef recognizer, void *context) { prv_preview_step(1); }
+static void prv_preview_select(ClickRecognizerRef recognizer, void *context) { prv_preview_step(0); }
+
+static void prv_preview_clicks(void *context) {
+  window_single_repeating_click_subscribe(BUTTON_ID_UP, 300, prv_preview_up);
+  window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 300, prv_preview_down);
+  window_single_click_subscribe(BUTTON_ID_SELECT, prv_preview_select);
+}
+#endif
+
 static void prv_inbox_received(DictionaryIterator *iter, void *context) {
+#ifdef PREVIEW
+  // Only the preview's own messages, not the face's live updates.
+  Tuple *label = dict_find(iter, MESSAGE_KEY_PreviewLabel);
+  if (!label) return;
+  prv_copy_string(s_preview_label, sizeof(s_preview_label), label);
+#endif
   prv_copy_string(s_data.team_name, sizeof(s_data.team_name), dict_find(iter, MESSAGE_KEY_TeamName));
   Tuple *abbrev = dict_find(iter, MESSAGE_KEY_TeamAbbrev);
   if (abbrev && strcmp(abbrev->value->cstring, s_data.team_abbrev) != 0) {
@@ -531,6 +570,7 @@ static void prv_inbox_received(DictionaryIterator *iter, void *context) {
   prv_copy_int(&s_data.tertiary, dict_find(iter, MESSAGE_KEY_ColorTertiary));
   prv_copy_int(&s_data.text, dict_find(iter, MESSAGE_KEY_ColorText));
   prv_copy_int(&s_data.text2, dict_find(iter, MESSAGE_KEY_ColorText2));
+  prv_copy_int(&s_data.label, dict_find(iter, MESSAGE_KEY_ColorLabel));
   prv_copy_string(s_data.record, sizeof(s_data.record), dict_find(iter, MESSAGE_KEY_Record));
   prv_copy_string(s_data.points, sizeof(s_data.points), dict_find(iter, MESSAGE_KEY_Points));
   prv_copy_string(s_data.div_name, sizeof(s_data.div_name), dict_find(iter, MESSAGE_KEY_DivName));
@@ -606,6 +646,9 @@ static void prv_init(void) {
     .load = prv_window_load,
     .unload = prv_window_unload,
   });
+#ifdef PREVIEW
+  window_set_click_config_provider(s_window, prv_preview_clicks);
+#endif
   window_stack_push(s_window, true);
 
   tick_timer_service_subscribe(MINUTE_UNIT, prv_tick_handler);
