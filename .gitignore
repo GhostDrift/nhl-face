@@ -1,3 +1,4 @@
-build/
+build/*
+!build/nhl-face-store.pbw
 node_modules/
 .lock-waf*
