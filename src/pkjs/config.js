@@ -31,7 +31,7 @@ var classicItems = Object.keys(teams).filter(function(abbr) {
 });
 
 module.exports = [
-  { type: 'heading', defaultValue: 'NHL Face' },
+  { type: 'heading', defaultValue: 'Hockey-Face' },
   {
     type: 'section',
     items: [

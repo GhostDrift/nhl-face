@@ -1,5 +1,12 @@
 #include <pebble.h>
+
+// Team logos, on color watches. Building with NO_LOGOS defined, as
+// tools/store_build.sh does, leaves them out along with the logo screen and the
+// wrist flick, and the face always shows the game and standings.
+#if defined(PBL_COLOR) && !defined(NO_LOGOS)
+#define SHOW_LOGOS 1
 #include "logos.h"
+#endif
 
 #define PERSIST_KEY_DATA 1
 #define PERSIST_KEY_VIBE 2
@@ -265,7 +272,7 @@ static GColor prv_tint(GColor a, GColor b) {
 }
 
 static void prv_load_logo(void) {
-#ifdef PBL_COLOR
+#ifdef SHOW_LOGOS
   if (s_logo) return;
   for (unsigned i = 0; i < ARRAY_LENGTH(LOGOS); i++) {
     if (strcmp(LOGOS[i].abbr, s_data.team_abbrev) == 0) {
@@ -290,7 +297,7 @@ static void prv_unload_color_logo(void) {
 // Loads the color logo for the current team and panel, the NHL's version for dark
 // backgrounds if the panel is dark, replacing one loaded for another team or panel.
 static void prv_load_color_logo(void) {
-#ifdef PBL_COLOR
+#ifdef SHOW_LOGOS
   const GColor panel = prv_color(s_data.primary, GColorBlack);
   const bool dark = panel.r * 299 + panel.g * 587 + panel.b * 114 < 1500;
   for (unsigned i = 0; i < ARRAY_LENGTH(LOGOS); i++) {
@@ -581,7 +588,7 @@ static void prv_banner_timeout(void *context) {
   layer_mark_dirty(s_canvas);
 }
 
-#ifdef PBL_COLOR
+#ifdef SHOW_LOGOS
 static void prv_flick_timeout(void *context) {
   s_flick_timer = NULL;
   layer_mark_dirty(s_canvas);
@@ -749,8 +756,8 @@ static void prv_init(void) {
   window_stack_push(s_window, true);
 
   tick_timer_service_subscribe(MINUTE_UNIT, prv_tick_handler);
-#ifdef PBL_COLOR
-  // Only color watches have the logo to swap to.
+#ifdef SHOW_LOGOS
+  // Only color watches with logos have the logo to swap to.
   accel_tap_service_subscribe(prv_tap_handler);
 #endif
   s_bt_connected = connection_service_peek_pebble_app_connection();
@@ -763,7 +770,7 @@ static void prv_init(void) {
 
 static void prv_deinit(void) {
   tick_timer_service_unsubscribe();
-#ifdef PBL_COLOR
+#ifdef SHOW_LOGOS
   accel_tap_service_unsubscribe();
 #endif
   connection_service_unsubscribe();

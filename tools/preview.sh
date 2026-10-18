@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds "NHL Face Preview", a watch app for flipping through every team's color
+# Builds "Hockey-face Preview", a watch app for flipping through every team's color
 # schemes with the goal banner up, and installs it on the emulator or a watch.
 # Down and up step through the schemes; select flips between home and away.
 #
@@ -25,7 +25,7 @@ var fs = require("fs");
 var path = process.argv[1];
 var pkg = JSON.parse(fs.readFileSync(path));
 pkg.name = "nhl-face-preview";
-pkg.pebble.displayName = "NHL Face Preview";
+pkg.pebble.displayName = "Hockey-face Preview";
 pkg.pebble.uuid = "5b0c7a2e-4f1d-4d8a-9c3e-2a7f6b1e9d04";
 pkg.pebble.watchapp.watchface = false;
 pkg.pebble.messageKeys.push("PreviewStep", "PreviewLabel");

@@ -1,6 +1,6 @@
 {
   "name": "nhl-face",
-  "author": "MakeAwesomeHappen",
+  "author": "Jessica Crowson",
   "version": "1.0.0",
   "keywords": [
     "pebble-app"
@@ -10,7 +10,7 @@
     "pebble-clay": "^1.0.4"
   },
   "pebble": {
-    "displayName": "NHL Face",
+    "displayName": "Hockey-Face",
     "uuid": "c302f985-dcbe-4a13-beff-605e512ac508",
     "sdkVersion": "3",
     "enableMultiJS": true,

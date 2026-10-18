@@ -1,5 +1,5 @@
 {
-    "displayName": "NHL Face",
+    "displayName": "Hockey-Face",
     "uuid": "c302f985-dcbe-4a13-beff-605e512ac508",
     "sdkVersion": "3",
     "enableMultiJS": true,
@@ -1124,10 +1124,10 @@
         "configurable"
     ],
     "name": "nhl-face",
-    "shortName": "NHL Face",
-    "longName": "NHL Face",
+    "shortName": "Hockey-Face",
+    "longName": "Hockey-Face",
     "versionLabel": "1.0.0",
-    "companyName": "MakeAwesomeHappen",
+    "companyName": "Jessica Crowson",
     "appKeys": {
         "ConfigTeam": 10000,
         "ConfigAwayColors": 10001,
