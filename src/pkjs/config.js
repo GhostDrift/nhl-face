@@ -63,16 +63,11 @@ module.exports = [
         ]
       },
       {
-        type: 'select',
-        messageKey: 'ConfigGoalNotify',
-        label: 'Goal alerts',
-        description: 'The scorer, assists, and score when your team scores, as a phone notification or as a banner on the face.',
-        defaultValue: 'off',
-        options: [
-          { label: 'Off', value: 'off' },
-          { label: 'Phone notification', value: 'notify' },
-          { label: 'Banner on the watch face', value: 'banner' }
-        ]
+        type: 'toggle',
+        messageKey: 'ConfigGoalBanner',
+        label: 'Goal banner',
+        description: 'The scorer, assists, and score on the face when your team scores.',
+        defaultValue: true
       },
       {
         type: 'select',
