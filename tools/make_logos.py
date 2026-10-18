@@ -176,7 +176,8 @@ def main():
 
     with open('package.json') as f:
         pkg = json.load(f)
-    resources = []
+    # Keep the other resources, such as the menu icon.
+    resources = [r for r in pkg['pebble']['resources']['media'] if not r['name'].startswith('LOGO_')]
     for abbr in abbrs:
         resources.append(dict(media('LOGO_' + abbr, 'images/logo_{}.png'.format(abbr)), memoryFormat='1BitPalette'))
         resources.append(media('LOGO_COLOR_' + abbr, 'images/logo_color_{}.png'.format(abbr)))

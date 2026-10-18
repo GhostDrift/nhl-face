@@ -7,3 +7,4 @@
 
 #define  DEFAULT_MENU_ICON  0
 
+#define  RESOURCE_ID_MENU_ICON  1

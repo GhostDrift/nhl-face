@@ -80,6 +80,12 @@
       "media": [
         {
           "type": "bitmap",
+          "name": "MENU_ICON",
+          "file": "images/menu_icon.png",
+          "menuIcon": true
+        },
+        {
+          "type": "bitmap",
           "name": "LOGO_ANA",
           "file": "images/logo_ANA.png",
           "memoryFormat": "1BitPalette",
