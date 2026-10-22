@@ -6,7 +6,8 @@
 // Classic schemes are older team colors to pick from in settings. Most are picked
 // straight from the watch's palette, since faded jersey colors map to murky ones.
 // awaySecondary, if set, replaces the main color on away days, for schemes whose
-// main color is black. homeLabel and awayLabel, if set, color the labels set into
+// main color is black. awayTertiary, if set, is the away pinstripe instead of the
+// one picked to stand out. homeLabel and awayLabel, if set, color the labels set into
 // the pinstripes instead of the stripe color: a color, or 'text' for the regular
 // text color.
 module.exports = {
@@ -73,7 +74,8 @@ module.exports = {
          classics: [
            { id: 'skate', name: 'Flying skate (1978–97)', primary: 0x000000, secondary: 0xC8102E, tertiary: 0xFFAA00, awaySecondary: 0xC8102E }
          ] },
-  VGK: { name: 'Golden Knights', primary: 0xB4975A, secondary: 0x333F42, tertiary: 0xC8102E },
+  VGK: { name: 'Golden Knights', primary: 0xB4975A, secondary: 0x333F42, tertiary: 0xC8102E,
+         awayTertiary: 0xC8102E, awayLabel: 'text' },
   WPG: { name: 'Jets',           primary: 0x041E42, secondary: 0xFFFFFF, tertiary: 0xAC162C,
          classics: [
            { id: 'original', name: 'Original Jets (1979–96)', primary: 0x0055AA, secondary: 0xFF0000, tertiary: 0xFFFFFF }

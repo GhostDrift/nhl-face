@@ -66,12 +66,15 @@ function watchColor(rgb) {
 
 // Home colors normally; on the day of an away game, the away-jersey look: white where
 // the main color goes, the main color where the second color goes, and a pinstripe
-// that stands out from both.
+// that stands out from both, unless the scheme names one.
 function teamColors(info, away) {
   if (!away) {
     return { primary: info.primary, secondary: info.secondary, tertiary: info.tertiary };
   }
   var primary = 0xFFFFFF, secondary = info.awaySecondary || info.primary;
+  if (info.awayTertiary !== undefined) {
+    return { primary: primary, secondary: secondary, tertiary: info.awayTertiary };
+  }
   var tertiary = 0x000000;
   var candidates = [info.secondary, info.tertiary];
   for (var i = 0; i < candidates.length; i++) {

@@ -332,23 +332,10 @@ static void prv_draw_logo(GContext *ctx, GRect rect, GColor panel, GColor fg) {
   prv_draw_centered(ctx, s_logo, rect);
 }
 
-// True when the team plays today: its next game is today, or a game is on or just over.
-static bool prv_game_today(void) {
-  switch (s_data.game_state) {
-    case STATE_LIVE:
-    case STATE_FINAL:
-      return true;
-    case STATE_NEXT:
-      return s_data.game_start < time_start_of_today() + SECONDS_PER_DAY;
-    default:
-      return false;
-  }
-}
-
-// Whether the NHL block shows the logo instead of the game and standings: on days
-// without a game, and on game days only while a wrist flick has it swapped.
+// Whether the NHL block shows the logo instead of the game and standings: only
+// while a wrist flick has it swapped.
 static bool prv_show_logo(void) {
-  return s_logo && prv_game_today() == (s_flick_timer != NULL);
+  return s_logo && s_flick_timer != NULL;
 }
 
 // One line of the goal banner, which may wrap onto up to max_lines lines.
