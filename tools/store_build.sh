@@ -1,7 +1,6 @@
 #!/bin/sh
 # Builds the face without the team logos, for publishing to the app store, and
-# copies it to build/nhl-face-store.pbw. Without logos, the face always shows the
-# game and standings, the wrist flick does nothing, and the goal banner is plain.
+# copies it to build/nhl-face-store.pbw. Without logos, the goal banner is plain.
 #
 # Usage: tools/store_build.sh                  just build it
 #        tools/store_build.sh [basalt|emery]   and install it on the running emulator

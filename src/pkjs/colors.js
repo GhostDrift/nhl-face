@@ -41,8 +41,7 @@ var LEVELS = [0x00, 0x55, 0xAA, 0xFF];
 // Colors this close to gray take a watch gray, so near-blacks don't turn blue.
 var GRAY_CHROMA = 0.03;
 
-// The closest looking of the watch's 64 colors, the same way tools/make_logos.py
-// colors the logos, so the face matches them. The watch would otherwise cut each
+// The closest looking of the watch's 64 colors. The watch would otherwise cut each
 // channel to its top two bits, which can shift a color's hue.
 function watchColor(rgb) {
   var target = oklab(rgb);

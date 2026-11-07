@@ -1,7 +1,7 @@
 // NHL team colors: primary (background, block panels), secondary (block borders, bubbles),
 // tertiary (pinstripes). Tertiary sits between the other two, so it differs from both.
 // These are the official colors; the phone sends the closest looking of the watch's
-// 64 colors (colors.js), which is also how the logos are colored, so the two match.
+// 64 colors (colors.js).
 //
 // Classic schemes are older team colors to pick from in settings. Most are picked
 // straight from the watch's palette, since faded jersey colors map to murky ones.
