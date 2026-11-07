@@ -9,7 +9,7 @@
 
 #define PERSIST_KEY_DATA 1
 #define PERSIST_KEY_VIBE 2
-#define DATA_VERSION 7
+#define DATA_VERSION 8
 
 enum { STATE_NONE = 0, STATE_NEXT = 1, STATE_LIVE = 2, STATE_FINAL = 3 };
 enum { BUZZ_PERIOD = 1, BUZZ_FINAL = 2 };
@@ -41,6 +41,9 @@ typedef struct {
   int32_t home;
   char line1[24];
   char line2[32];
+  // Shots on goal during a live game.
+  char away_shots[4];
+  char home_shots[4];
   int32_t refresh_mins;
 } FaceData;
 
@@ -435,8 +438,10 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
                         inner.size.w - 16, true, accent, tab_fg);
   if (s_banner_timer) return;
 
-  // Three rows of bubbles spaced evenly below the team name:
-  // the game, then RECORD | PTS, then division | NHL.
+  // Three rows of bubbles spaced evenly below the team name: the game, then
+  // RECORD | PTS, then division | NHL. During a live game each team's shots on goal
+  // take the middle row. In the playoffs, where these show the series and the
+  // playoff record, that moves the series down over the playoff record.
   const int pad = big ? 5 : 4;
   const int gap = big ? 6 : 4;
   const int bubble_h = 2 * BUBBLE_STRIPE_INSET + label_half + value_font.cap_h + (big ? 8 : 3);
@@ -458,17 +463,30 @@ static void prv_canvas_update(Layer *layer, GContext *ctx) {
 
   const int record_w = (bw - gap) * 5 / 8;
   const int col_w = (bw - gap) / 2;
-  prv_draw_bubble(ctx, GRect(bx, row1_y, record_w, bubble_h),
-                  s_data.record_label[0] ? s_data.record_label : "RECORD", label_font,
-                  s_data.record, value_font, accent, stripe, tab_fg, accent_fg);
-  prv_draw_bubble(ctx, GRect(bx + record_w + gap, row1_y, bw - record_w - gap, bubble_h),
-                  s_data.points_label[0] ? s_data.points_label : "PTS", label_font,
-                  s_data.points, value_font, accent, stripe, tab_fg, accent_fg);
-  prv_draw_bubble(ctx, GRect(bx, row2_y, col_w, bubble_h), s_data.div_name[0] ? s_data.div_name : "DIV",
-                  label_font, s_data.div_rank, value_font, accent, stripe, tab_fg, accent_fg);
-  prv_draw_bubble(ctx, GRect(bx + bw - col_w, row2_y, col_w, bubble_h),
-                  s_data.league_label[0] ? s_data.league_label : "NHL", label_font,
-                  s_data.league_rank, value_font, accent, stripe, tab_fg, accent_fg);
+  const bool show_shots = s_data.game_state == STATE_LIVE && s_data.away_shots[0];
+  const bool playoffs = s_data.record_label[0] && strcmp(s_data.record_label, "RECORD") != 0;
+  if (show_shots) {
+    prv_draw_bubble(ctx, GRect(bx, row1_y, col_w, bubble_h), "SOG", label_font, s_data.away_shots, value_font,
+                    accent, stripe, tab_fg, accent_fg);
+    prv_draw_bubble(ctx, GRect(bx + bw - col_w, row1_y, col_w, bubble_h), "SOG", label_font, s_data.home_shots,
+                    value_font, accent, stripe, tab_fg, accent_fg);
+  }
+  if (!show_shots || playoffs) {
+    const int y = show_shots ? row2_y : row1_y;
+    prv_draw_bubble(ctx, GRect(bx, y, record_w, bubble_h),
+                    s_data.record_label[0] ? s_data.record_label : "RECORD", label_font,
+                    s_data.record, value_font, accent, stripe, tab_fg, accent_fg);
+    prv_draw_bubble(ctx, GRect(bx + record_w + gap, y, bw - record_w - gap, bubble_h),
+                    s_data.points_label[0] ? s_data.points_label : "PTS", label_font,
+                    s_data.points, value_font, accent, stripe, tab_fg, accent_fg);
+  }
+  if (!show_shots || !playoffs) {
+    prv_draw_bubble(ctx, GRect(bx, row2_y, col_w, bubble_h), s_data.div_name[0] ? s_data.div_name : "DIV",
+                    label_font, s_data.div_rank, value_font, accent, stripe, tab_fg, accent_fg);
+    prv_draw_bubble(ctx, GRect(bx + bw - col_w, row2_y, col_w, bubble_h),
+                    s_data.league_label[0] ? s_data.league_label : "NHL", label_font,
+                    s_data.league_rank, value_font, accent, stripe, tab_fg, accent_fg);
+  }
 }
 
 static void prv_update_time(void) {
@@ -630,11 +648,15 @@ static void prv_inbox_received(DictionaryIterator *iter, void *context) {
     s_data.game_state = state->value->int32;
     s_data.line1[0] = '\0';
     s_data.line2[0] = '\0';
+    s_data.away_shots[0] = '\0';
+    s_data.home_shots[0] = '\0';
     prv_copy_int(&s_data.game_start, dict_find(iter, MESSAGE_KEY_GameStart));
     prv_copy_string(s_data.opp, sizeof(s_data.opp), dict_find(iter, MESSAGE_KEY_GameOpp));
     prv_copy_int(&s_data.home, dict_find(iter, MESSAGE_KEY_GameHome));
     prv_copy_string(s_data.line1, sizeof(s_data.line1), dict_find(iter, MESSAGE_KEY_GameLine1));
     prv_copy_string(s_data.line2, sizeof(s_data.line2), dict_find(iter, MESSAGE_KEY_GameLine2));
+    prv_copy_string(s_data.away_shots, sizeof(s_data.away_shots), dict_find(iter, MESSAGE_KEY_GameAwayShots));
+    prv_copy_string(s_data.home_shots, sizeof(s_data.home_shots), dict_find(iter, MESSAGE_KEY_GameHomeShots));
   }
 
   persist_write_data(PERSIST_KEY_DATA, &s_data, sizeof(s_data));

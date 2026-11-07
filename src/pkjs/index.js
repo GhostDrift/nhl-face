@@ -144,6 +144,11 @@ function buildGameFields(team, picked, liveScore) {
     msg[keys.GameState] = STATE_LIVE;
     msg[keys.GameLine1] = 'LIVE  ' + status;
     msg[keys.GameLine2] = scoreLine(g);
+    // Only the scoreboard has shots; without it the watch keeps the record row.
+    if (liveScore) {
+      msg[keys.GameAwayShots] = String(g.awayTeam.sog || 0);
+      msg[keys.GameHomeShots] = String(g.homeTeam.sog || 0);
+    }
   } else if (picked.recent) {
     g = picked.recent;
     var last = g.gameOutcome && g.gameOutcome.lastPeriodType;

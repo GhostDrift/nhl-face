@@ -64,6 +64,8 @@
       "GameHome",
       "GameLine1",
       "GameLine2",
+    "GameAwayShots",
+    "GameHomeShots",
       "RefreshMins",
       "RequestUpdate",
       "VibeOnDisconnect",
