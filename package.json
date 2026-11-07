@@ -24,6 +24,8 @@
     },
     "messageKeys": [
       "ConfigTeam",
+    "ConfigTeam2",
+    "ConfigTeam3",
       "ConfigAwayColors",
       "ConfigClassicANA",
       "ConfigClassicBUF",

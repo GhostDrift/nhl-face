@@ -155,6 +155,10 @@ Discarded input sections
                 0x00000000        0x4 src/message_keys.auto.c.25.o
  .data.MESSAGE_KEY_ConfigVibeOnFinal
                 0x00000000        0x4 src/message_keys.auto.c.25.o
+ .data.MESSAGE_KEY_ConfigTeam3
+                0x00000000        0x4 src/message_keys.auto.c.25.o
+ .data.MESSAGE_KEY_ConfigTeam2
+                0x00000000        0x4 src/message_keys.auto.c.25.o
  .data.MESSAGE_KEY_ConfigTeam
                 0x00000000        0x4 src/message_keys.auto.c.25.o
  .data.MESSAGE_KEY_ConfigGoalBanner
@@ -2104,11 +2108,11 @@ LOAD /home/jessica/.local/share/pebble-sdk/SDKs/4.44/toolchain/arm-none-eabi/bin
  .comment       0x00000039       0x3a /home/jessica/.local/share/pebble-sdk/SDKs/4.44/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a(libc_a-errno.o)
  .comment       0x00000039       0x3a /home/jessica/.local/share/pebble-sdk/SDKs/4.44/toolchain/arm-none-eabi/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v7-m/nofp/crtend.o
 
-.debug_info     0x00000000     0x4691
+.debug_info     0x00000000     0x46b1
  .debug_info    0x00000000     0x3cc8 src/c/nhl-face.c.25.o
  .debug_info    0x00003cc8      0x35f basalt/appinfo.auto.c.25.o
  .debug_info    0x00004027      0x28d basalt/src/resource_ids.auto.c.25.o
- .debug_info    0x000042b4      0x3dd src/message_keys.auto.c.25.o
+ .debug_info    0x000042b4      0x3fd src/message_keys.auto.c.25.o
 
 .debug_abbrev   0x00000000      0x790
  .debug_abbrev  0x00000000      0x622 src/c/nhl-face.c.25.o
@@ -2142,12 +2146,12 @@ LOAD /home/jessica/.local/share/pebble-sdk/SDKs/4.44/toolchain/arm-none-eabi/bin
  .debug_line    0x0000197e      0x128 basalt/src/resource_ids.auto.c.25.o
  .debug_line    0x00001aa6      0x121 src/message_keys.auto.c.25.o
 
-.debug_str      0x00000000     0x1f18
- .debug_str     0x00000000     0x1f18 src/c/nhl-face.c.25.o
+.debug_str      0x00000000     0x1f48
+ .debug_str     0x00000000     0x1f48 src/c/nhl-face.c.25.o
                                0x17b8 (size before relaxing)
- .debug_str     0x00001f18      0x4ec basalt/appinfo.auto.c.25.o
- .debug_str     0x00001f18      0x42d basalt/src/resource_ids.auto.c.25.o
- .debug_str     0x00001f18      0x6c1 src/message_keys.auto.c.25.o
+ .debug_str     0x00001f48      0x4ec basalt/appinfo.auto.c.25.o
+ .debug_str     0x00001f48      0x42d basalt/src/resource_ids.auto.c.25.o
+ .debug_str     0x00001f48      0x6f1 src/message_keys.auto.c.25.o
 
 .debug_frame    0x00000000      0x2bc
  .debug_frame   0x00000000      0x2bc src/c/nhl-face.c.25.o

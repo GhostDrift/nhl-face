@@ -14,15 +14,18 @@ var options = Object.keys(teams).map(function(abbr) {
   return { label: places[abbr] + ' ' + teams[abbr].name, value: abbr };
 }).sort(function(a, b) { return a.label < b.label ? -1 : 1; });
 
+// Optional extra teams to follow.
+var extraOptions = [{ label: 'None', value: 'none' }].concat(options);
+
 // A Classic colors picker for each team that has older schemes. The settings page
-// shows only the one for the picked team.
+// shows only the ones for the picked teams.
 var classicItems = Object.keys(teams).filter(function(abbr) {
   return teams[abbr].classics;
 }).map(function(abbr) {
   return {
     type: 'select',
     messageKey: 'ConfigClassic' + abbr,
-    label: 'Classic colors',
+    label: teams[abbr].name + ' classic colors',
     defaultValue: 'current',
     options: [{ label: 'Current', value: 'current' }].concat(teams[abbr].classics.map(function(c) {
       return { label: c.name, value: c.id };
@@ -38,9 +41,24 @@ module.exports = [
       {
         type: 'select',
         messageKey: 'ConfigTeam',
-        label: 'Team',
+        label: 'Team 1',
         defaultValue: 'BOS',
         options: options
+      },
+      {
+        type: 'select',
+        messageKey: 'ConfigTeam2',
+        label: 'Team 2',
+        defaultValue: 'none',
+        options: extraOptions
+      },
+      {
+        type: 'select',
+        messageKey: 'ConfigTeam3',
+        label: 'Team 3',
+        description: 'The face shows whichever team plays next. If games overlap, it stays on the one that started first until it ends, shows the final for 2 minutes, then moves to the other. If they start together, the lower numbered team goes first. Goal and game alerts follow the game on the face.',
+        defaultValue: 'none',
+        options: extraOptions
       }
     ].concat(classicItems, [
       {

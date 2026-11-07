@@ -2,20 +2,26 @@ var Clay = require('pebble-clay');
 var clayConfig = require('./config');
 var teams = require('./teams');
 var colors = require('./colors');
+var chooseTeam = require('./followed').chooseTeam;
 var keys = require('message_keys');
 
-// Runs in the settings page: shows only the picked team's Classic colors option.
+// Runs in the settings page: shows only the picked teams' Classic colors options.
 function clayCustom() {
   var clay = this;
+  var pickers = ['ConfigTeam', 'ConfigTeam2', 'ConfigTeam3'];
   function sync() {
-    var team = clay.getItemByMessageKey('ConfigTeam').get();
+    var shown = pickers.map(function(key) {
+      return 'ConfigClassic' + clay.getItemByMessageKey(key).get();
+    });
     clay.getAllItems().forEach(function(item) {
       if (!/^ConfigClassic/.test(item.messageKey || '')) return;
-      if (item.messageKey === 'ConfigClassic' + team) item.show(); else item.hide();
+      if (shown.indexOf(item.messageKey) >= 0) item.show(); else item.hide();
     });
   }
   clay.on(clay.EVENTS.AFTER_BUILD, function() {
-    clay.getItemByMessageKey('ConfigTeam').on('change', sync);
+    pickers.forEach(function(key) {
+      clay.getItemByMessageKey(key).on('change', sync);
+    });
     sync();
   });
 }
@@ -48,10 +54,22 @@ var GOAL_BANNER_SECS = 30;
 var GOAL_BANNER_TRIES = 9;
 // Show a finished game's final score until this long after puck drop.
 var FINAL_WINDOW_MS = 6 * 60 * 60 * 1000;
+// How long a game that just ended keeps the face before another followed team's game.
+var FINAL_HOLD_MS = 2 * 60 * 1000;
 
 function getTeam() {
   var team = localStorage.getItem('team');
   return teams[team] ? team : 'VGK';
+}
+
+// The followed teams, team 1 first, without repeats.
+function getTeams() {
+  var list = [getTeam()];
+  ['team2', 'team3'].forEach(function(key) {
+    var team = localStorage.getItem(key);
+    if (teams[team] && list.indexOf(team) < 0) list.push(team);
+  });
+  return list;
 }
 
 function getJSON(url, callback) {
@@ -507,6 +525,19 @@ function pollDelay(found) {
   return LIVE_POLL_MS;
 }
 
+// Keeps the just-ended game on the face for a little, then updates to move on.
+function holdFinal(game) {
+  localStorage.setItem('finalHold', JSON.stringify({ id: game.id, until: Date.now() + FINAL_HOLD_MS }));
+  setTimeout(update, FINAL_HOLD_MS + 1000);
+}
+
+// The id of the game whose final is being held, if any.
+function heldGame() {
+  var hold = null;
+  try { hold = JSON.parse(localStorage.getItem('finalHold')); } catch (e) {}
+  return hold && Date.now() < hold.until ? hold.id : null;
+}
+
 // Polls the scoreboard for a live or about-to-start game and messages the watch only
 // when there's puck drop, a goal, a period starting or ending, or the final horn. Once
 // the game ends, does a full update.
@@ -530,6 +561,7 @@ function startLivePoll(team, game) {
       }
       if (over) {
         stopLivePoll();
+        holdFinal(found);
         update();
       } else {
         poll.timer = setTimeout(tick, pollDelay(found));
@@ -547,8 +579,10 @@ function sendToWatch(msg) {
   });
 }
 
-function update() {
-  var team = getTeam();
+// Sends the watch everything for team. Without a schedule the game stays as it is.
+// others are the other followed teams, as chooseTeam takes them, so one of their games
+// starting soon gets the same quick updates as the team's own.
+function showTeam(team, schedule, standings, others) {
   var info = teams[team];
   var msg = {};
   msg[keys.TeamName] = info.name.toUpperCase();
@@ -556,30 +590,16 @@ function update() {
   msg[keys.VibeOnDisconnect] = localStorage.getItem('vibeOnDisconnect') === '1' ? 1 : 0;
   var scheme = teamScheme(team);
   colors.applyScheme(msg, scheme, false);
-
-  var pending = 2;
-  var standings = null, schedule = null;
-  function done() {
-    if (--pending > 0) return;
-    if (standings) {
-      var s = buildStandingsFields(team, standings);
-      for (var k in s) msg[k] = s[k];
-    }
-    if (!schedule) {
-      msg[keys.RefreshMins] = 10;
-      sendToWatch(msg);
-      return;
-    }
-    var season = playoffSeason(schedule);
-    if (!season) {
-      showGame(null);
-      return;
-    }
-    getJSON(API + '/playoff-series/carousel/' + season + '/', function(err, data) {
-      if (err) console.log(err.message);
-      showGame(err ? null : data);
-    });
+  if (standings) {
+    var s = buildStandingsFields(team, standings);
+    for (var k in s) msg[k] = s[k];
   }
+  if (!schedule) {
+    msg[keys.RefreshMins] = 10;
+    sendToWatch(msg);
+    return;
+  }
+
   // Adds the game, and the playoff stats from bracket if given, and sends it all.
   function showGame(bracket) {
     var picked = pickGames(schedule);
@@ -588,7 +608,9 @@ function update() {
     var awayColors = localStorage.getItem('awayColors') !== '0';
     colors.applyScheme(msg, scheme, awayColors && awayToday(team, schedule));
     function finish(liveScore) {
-      msg[keys.RefreshMins] = refreshMinutes(picked, liveScore);
+      msg[keys.RefreshMins] = others.reduce(function(mins, other) {
+        return Math.min(mins, refreshMinutes(other.picked, null));
+      }, refreshMinutes(picked, liveScore));
       var gm = buildGameFields(team, picked, liveScore);
       // With no game to show, say where the season stands instead.
       var status = gm[keys.GameState] === STATE_NONE && seasonStatus(team, standings, bracket);
@@ -615,13 +637,48 @@ function update() {
     });
   }
 
+  var season = playoffSeason(schedule);
+  if (!season) {
+    showGame(null);
+    return;
+  }
+  getJSON(API + '/playoff-series/carousel/' + season + '/', function(err, data) {
+    if (err) console.log(err.message);
+    showGame(err ? null : data);
+  });
+}
+
+// Fetches every followed team's schedule, then shows the one chooseTeam picks. If any
+// schedule is missing, stays on the team already showing rather than choosing without it.
+function update() {
+  var followed = getTeams();
+  var standings = null, schedules = {};
+  var pending = followed.length + 1;
+  function done() {
+    if (--pending > 0) return;
+    var complete = followed.every(function(team) { return schedules[team]; });
+    if (!complete) {
+      var last = localStorage.getItem('shownTeam');
+      showTeam(followed.indexOf(last) >= 0 ? last : followed[0], null, standings, []);
+      return;
+    }
+    var entries = followed.map(function(team) {
+      return { team: team, picked: pickGames(schedules[team]) };
+    });
+    var team = chooseTeam(entries, nearStart, heldGame());
+    localStorage.setItem('shownTeam', team);
+    showTeam(team, schedules[team], standings, entries.filter(function(e) { return e.team !== team; }));
+  }
+
   getJSON(API + '/standings/now', function(err, data) {
     if (err) console.log(err.message); else standings = data;
     done();
   });
-  getJSON(API + '/club-schedule-season/' + team + '/now', function(err, data) {
-    if (err) console.log(err.message); else schedule = data;
-    done();
+  followed.forEach(function(team) {
+    getJSON(API + '/club-schedule-season/' + team + '/now', function(err, data) {
+      if (err) console.log(err.message); else schedules[team] = data;
+      done();
+    });
   });
 }
 
@@ -642,6 +699,8 @@ Pebble.addEventListener('webviewclosed', function(e) {
   var settings = clay.getSettings(e.response);
   var team = settings[keys.ConfigTeam];
   if (teams[team]) localStorage.setItem('team', team);
+  localStorage.setItem('team2', settings[keys.ConfigTeam2] || 'none');
+  localStorage.setItem('team3', settings[keys.ConfigTeam3] || 'none');
   localStorage.setItem('awayColors', settings[keys.ConfigAwayColors] ? '1' : '0');
   Object.keys(teams).forEach(function(abbr) {
     if (teams[abbr].classics) localStorage.setItem('classic' + abbr, settings[keys['ConfigClassic' + abbr]] || 'current');
