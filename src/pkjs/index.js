@@ -3,6 +3,7 @@ var clayConfig = require('./config');
 var teams = require('./teams');
 var colors = require('./colors');
 var chooseTeam = require('./followed').chooseTeam;
+var pinFinals = require('./timeline').pinFinals;
 var keys = require('message_keys');
 
 // Runs in the settings page: shows only the picked teams' Classic colors options.
@@ -666,6 +667,7 @@ function update() {
     var entries = followed.map(function(team) {
       return { team: team, picked: pickGames(schedules[team]) };
     });
+    pinFinals(entries.map(function(e) { return e.picked.recent; }));
     var team = chooseTeam(entries, nearStart, heldGame());
     localStorage.setItem('shownTeam', team);
     showTeam(team, schedules[team], standings, entries.filter(function(e) { return e.team !== team; }));

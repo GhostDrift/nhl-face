@@ -440,7 +440,8 @@
             "name": "Internet",
             "parameters": {
                 "domains": [
-                    "api-web.nhle.com"
+                    "api-web.nhle.com",
+                    "timeline-api.rebble.io"
                 ]
             }
         }
