@@ -144,8 +144,9 @@ function buildGameFields(team, picked, liveScore) {
     msg[keys.GameState] = STATE_LIVE;
     msg[keys.GameLine1] = 'LIVE  ' + status;
     msg[keys.GameLine2] = scoreLine(g);
-    // Only the scoreboard has shots; without it the watch keeps the record row.
-    if (liveScore) {
+    // Only the scoreboard has shots; without it, or with shots turned off in settings,
+    // the watch keeps the record row.
+    if (liveScore && localStorage.getItem('showShots') !== '0') {
       msg[keys.GameAwayShots] = String(g.awayTeam.sog || 0);
       msg[keys.GameHomeShots] = String(g.homeTeam.sog || 0);
     }
@@ -643,6 +644,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
   var team = settings[keys.ConfigTeam];
   if (teams[team]) localStorage.setItem('team', team);
   localStorage.setItem('awayColors', settings[keys.ConfigAwayColors] ? '1' : '0');
+  localStorage.setItem('showShots', settings[keys.ConfigShowShots] ? '1' : '0');
   Object.keys(teams).forEach(function(abbr) {
     if (teams[abbr].classics) localStorage.setItem('classic' + abbr, settings[keys['ConfigClassic' + abbr]] || 'current');
   });

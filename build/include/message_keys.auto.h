@@ -28,6 +28,7 @@ extern uint32_t MESSAGE_KEY_ConfigClassicVAN;
 extern uint32_t MESSAGE_KEY_ConfigClassicWPG;
 extern uint32_t MESSAGE_KEY_ConfigClassicWSH;
 extern uint32_t MESSAGE_KEY_ConfigGoalBanner;
+extern uint32_t MESSAGE_KEY_ConfigShowShots;
 extern uint32_t MESSAGE_KEY_ConfigTeam;
 extern uint32_t MESSAGE_KEY_ConfigVibeOnFinal;
 extern uint32_t MESSAGE_KEY_ConfigVibeOnGoal;

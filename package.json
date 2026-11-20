@@ -25,6 +25,7 @@
     "messageKeys": [
       "ConfigTeam",
       "ConfigAwayColors",
+      "ConfigShowShots",
       "ConfigClassicANA",
       "ConfigClassicBUF",
       "ConfigClassicCAR",
