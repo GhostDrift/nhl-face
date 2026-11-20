@@ -69,6 +69,13 @@ module.exports = [
         defaultValue: true
       },
       {
+        type: 'toggle',
+        messageKey: 'ConfigShowShots',
+        label: 'Shots on goal during games',
+        description: 'Each team\'s shots on goal in place of the record and points while a game is live.',
+        defaultValue: true
+      },
+      {
         type: 'select',
         messageKey: 'ConfigVibeOnGoal',
         label: 'Vibrate on goals',
