@@ -163,7 +163,7 @@ Discarded input sections
                 0x00000000        0x4 src/message_keys.auto.c.25.o
  .data.MESSAGE_KEY_ConfigShowShots
                 0x00000000        0x4 src/message_keys.auto.c.25.o
- .data.MESSAGE_KEY_ConfigPinToday
+ .data.MESSAGE_KEY_ConfigPinNext
                 0x00000000        0x4 src/message_keys.auto.c.25.o
  .data.MESSAGE_KEY_ConfigGoalBanner
                 0x00000000        0x4 src/message_keys.auto.c.25.o
@@ -2150,12 +2150,12 @@ LOAD /home/jessica/.local/share/pebble-sdk/SDKs/4.44/toolchain/arm-none-eabi/bin
  .debug_line    0x0000197e      0x128 basalt/src/resource_ids.auto.c.25.o
  .debug_line    0x00001aa6      0x121 src/message_keys.auto.c.25.o
 
-.debug_str      0x00000000     0x1f7f
- .debug_str     0x00000000     0x1f7f src/c/nhl-face.c.25.o
+.debug_str      0x00000000     0x1f7e
+ .debug_str     0x00000000     0x1f7e src/c/nhl-face.c.25.o
                                0x17b8 (size before relaxing)
- .debug_str     0x00001f7f      0x4ec basalt/appinfo.auto.c.25.o
- .debug_str     0x00001f7f      0x42d basalt/src/resource_ids.auto.c.25.o
- .debug_str     0x00001f7f      0x728 src/message_keys.auto.c.25.o
+ .debug_str     0x00001f7e      0x4ec basalt/appinfo.auto.c.25.o
+ .debug_str     0x00001f7e      0x42d basalt/src/resource_ids.auto.c.25.o
+ .debug_str     0x00001f7e      0x727 src/message_keys.auto.c.25.o
 
 .debug_frame    0x00000000      0x2bc
  .debug_frame   0x00000000      0x2bc src/c/nhl-face.c.25.o

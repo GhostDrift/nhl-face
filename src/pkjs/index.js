@@ -243,19 +243,6 @@ function teamRecords(standings) {
   return records;
 }
 
-// Every followed team's games, once each, so a game between two of them is pinned once.
-function followedGames(schedules) {
-  var seen = {}, games = [];
-  Object.keys(schedules).forEach(function(team) {
-    schedules[team].games.forEach(function(g) {
-      if (seen[g.id]) return;
-      seen[g.id] = true;
-      games.push(g);
-    });
-  });
-  return games;
-}
-
 // The season whose playoffs the team is in, once its regular season is over: its
 // schedule has playoff games and no regular season games left. Else null.
 function playoffSeason(schedule) {
@@ -692,7 +679,8 @@ function update() {
       return { team: team, picked: pickGames(schedules[team]) };
     });
     pinFinals(entries.map(function(e) { return e.picked.recent; }));
-    pinUpcoming(followedGames(schedules), teamRecords(standings), localStorage.getItem('pinToday') !== '0');
+    pinUpcoming(followed.map(function(team) { return schedules[team].games; }), teamRecords(standings),
+                localStorage.getItem('pinNext') !== '0');
     var team = chooseTeam(entries, nearStart, heldGame());
     localStorage.setItem('shownTeam', team);
     showTeam(team, schedules[team], standings, entries.filter(function(e) { return e.team !== team; }));
@@ -731,7 +719,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
   localStorage.setItem('team3', settings[keys.ConfigTeam3] || 'none');
   localStorage.setItem('awayColors', settings[keys.ConfigAwayColors] ? '1' : '0');
   localStorage.setItem('showShots', settings[keys.ConfigShowShots] ? '1' : '0');
-  localStorage.setItem('pinToday', settings[keys.ConfigPinToday] ? '1' : '0');
+  localStorage.setItem('pinNext', settings[keys.ConfigPinNext] ? '1' : '0');
   Object.keys(teams).forEach(function(abbr) {
     if (teams[abbr].classics) localStorage.setItem('classic' + abbr, settings[keys['ConfigClassic' + abbr]] || 'current');
   });

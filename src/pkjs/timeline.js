@@ -1,4 +1,4 @@
-// The watch's timeline: today's upcoming games pinned at puck drop, and final scores
+// The watch's timeline: each followed team's next game pinned at puck drop, and final scores
 // pinned when each game ends, so a result bumped off the face can still be found by
 // scrolling back.
 
@@ -97,10 +97,10 @@ function pinFinals(games) {
   });
 }
 
-// Today's upcoming games
+// Each team's next game
 
-function upcomingId(game) {
-  return 'nhl-game-' + game.id;
+function upcomingId(id) {
+  return 'nhl-game-' + id;
 }
 
 function upcomingPin(game, records) {
@@ -117,41 +117,52 @@ function upcomingPin(game, records) {
   if (records[away]) layout.recordAway = records[away];
   if (records[home]) layout.recordHome = records[home];
   return {
-    id: upcomingId(game),
+    id: upcomingId(game.id),
     time: new Date(Date.parse(game.startTimeUTC)).toISOString(),
     duration: TYPICAL_GAME_MS / 60000,
     layout: layout
   };
 }
 
-// True for a game that hasn't started yet and starts today, phone local time.
-function upcomingToday(game) {
-  var start = new Date(Date.parse(game.startTimeUTC));
-  return (game.gameState === 'FUT' || game.gameState === 'PRE') &&
-         start.getTime() > Date.now() && start.toDateString() === new Date().toDateString();
+// The first game in games, a team's schedule in order, that hasn't started and
+// isn't cancelled, however far off. Null if there isn't one.
+function nextGame(games) {
+  var now = Date.now();
+  return games.filter(function(g) {
+    return (g.gameState === 'FUT' || g.gameState === 'PRE') && g.gameScheduleState !== 'CNCL' &&
+           Date.parse(g.startTimeUTC) > now;
+  })[0] || null;
 }
 
-// Keeps a pin at puck drop for each of today's games in games that hasn't started,
-// moving it if the start time changes and removing it if the game is cancelled.
-// With on false, removes the ones still to come instead. records maps a team's
+// Keeps a pin at puck drop for each followed team's next game, from schedules, a
+// list of each team's games. A game two teams share is pinned once. Once a game
+// starts, the team's following game is pinned. A pin moves if its start time
+// changes, and a pin for a game still to come that isn't anyone's next game any
+// more, such as a cancelled one or one for a team no longer followed, is removed.
+// With on false, every pin for a game not started yet is removed. records maps a team's
 // abbreviation to its record, for the pin. Pinned games are kept in localStorage,
 // as id: start time, so each is sent once.
-function pinUpcoming(games, records, on) {
+function pinUpcoming(schedules, records, on) {
   var pinned = load('pinnedUpcoming', {});
   var now = Date.now();
-  var puts = [], deletes = [];
-  games.forEach(function(g) {
-    var had = pinned[g.id];
-    var cancelled = g.gameScheduleState === 'CNCL';
-    if (on && !cancelled && upcomingToday(g)) {
-      if (had !== g.startTimeUTC) puts.push(g);
-    } else if (had && (cancelled || (!on && Date.parse(had) > now))) {
-      deletes.push(g.id);
-    }
+  var wanted = {}, started = {};
+  schedules.forEach(function(games) {
+    games.forEach(function(g) {
+      if (g.gameState !== 'FUT' && g.gameState !== 'PRE') started[g.id] = true;
+    });
+    var next = on && nextGame(games);
+    if (next) wanted[next.id] = next;
+  });
+  var puts = Object.keys(wanted).filter(function(id) {
+    return pinned[id] !== wanted[id].startTimeUTC;
+  }).map(function(id) { return wanted[id]; });
+  var deletes = Object.keys(pinned).filter(function(id) {
+    // A game that has started keeps its pin, even ahead of its scheduled time.
+    return !wanted[id] && !started[id] && Date.parse(pinned[id]) > now;
   });
   // Forget games long started, so the list stays short.
   Object.keys(pinned).forEach(function(id) {
-    if (now - Date.parse(pinned[id]) > UPCOMING_KEEP_MS && deletes.indexOf(Number(id)) < 0) delete pinned[id];
+    if (now - Date.parse(pinned[id]) > UPCOMING_KEEP_MS) delete pinned[id];
   });
   localStorage.setItem('pinnedUpcoming', JSON.stringify(pinned));
   if (!puts.length && !deletes.length) return;
@@ -163,12 +174,12 @@ function pinUpcoming(games, records, on) {
   }
   withToken(function(token) {
     puts.forEach(function(game) {
-      send(token, upcomingId(game), upcomingPin(game, records), function(err) {
+      send(token, upcomingId(game.id), upcomingPin(game, records), function(err) {
         if (err) console.log(err.message); else save(game.id, game.startTimeUTC);
       });
     });
     deletes.forEach(function(id) {
-      send(token, 'nhl-game-' + id, null, function(err) {
+      send(token, upcomingId(id), null, function(err) {
         // Already gone counts as removed.
         if (err && !/HTTP 404/.test(err.message)) console.log(err.message); else save(id, null);
       });
