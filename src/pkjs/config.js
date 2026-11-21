@@ -76,6 +76,13 @@ module.exports = [
         defaultValue: true
       },
       {
+        type: 'toggle',
+        messageKey: 'ConfigPinToday',
+        label: 'Pin today\'s games to the timeline',
+        description: 'Each game your teams play today shows on the timeline at puck drop. Final scores are always pinned when games end.',
+        defaultValue: true
+      },
+      {
         type: 'select',
         messageKey: 'ConfigVibeOnGoal',
         label: 'Vibrate on goals',

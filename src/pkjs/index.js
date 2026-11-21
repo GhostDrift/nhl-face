@@ -3,7 +3,9 @@ var clayConfig = require('./config');
 var teams = require('./teams');
 var colors = require('./colors');
 var chooseTeam = require('./followed').chooseTeam;
-var pinFinals = require('./timeline').pinFinals;
+var timeline = require('./timeline');
+var pinFinals = timeline.pinFinals;
+var pinUpcoming = timeline.pinUpcoming;
 var keys = require('message_keys');
 
 // Runs in the settings page: shows only the picked teams' Classic colors options.
@@ -230,6 +232,28 @@ function buildStandingsFields(team, standings) {
     msg[keys.LeagueRank] = '';
   }
   return msg;
+}
+
+// Every team's W-L-OTL record from the standings, by abbreviation. Empty without them.
+function teamRecords(standings) {
+  var records = {};
+  (standings ? standings.standings : []).forEach(function(s) {
+    records[s.teamAbbrev.default] = s.wins + '-' + s.losses + '-' + s.otLosses;
+  });
+  return records;
+}
+
+// Every followed team's games, once each, so a game between two of them is pinned once.
+function followedGames(schedules) {
+  var seen = {}, games = [];
+  Object.keys(schedules).forEach(function(team) {
+    schedules[team].games.forEach(function(g) {
+      if (seen[g.id]) return;
+      seen[g.id] = true;
+      games.push(g);
+    });
+  });
+  return games;
 }
 
 // The season whose playoffs the team is in, once its regular season is over: its
@@ -668,6 +692,7 @@ function update() {
       return { team: team, picked: pickGames(schedules[team]) };
     });
     pinFinals(entries.map(function(e) { return e.picked.recent; }));
+    pinUpcoming(followedGames(schedules), teamRecords(standings), localStorage.getItem('pinToday') !== '0');
     var team = chooseTeam(entries, nearStart, heldGame());
     localStorage.setItem('shownTeam', team);
     showTeam(team, schedules[team], standings, entries.filter(function(e) { return e.team !== team; }));
@@ -706,6 +731,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
   localStorage.setItem('team3', settings[keys.ConfigTeam3] || 'none');
   localStorage.setItem('awayColors', settings[keys.ConfigAwayColors] ? '1' : '0');
   localStorage.setItem('showShots', settings[keys.ConfigShowShots] ? '1' : '0');
+  localStorage.setItem('pinToday', settings[keys.ConfigPinToday] ? '1' : '0');
   Object.keys(teams).forEach(function(abbr) {
     if (teams[abbr].classics) localStorage.setItem('classic' + abbr, settings[keys['ConfigClassic' + abbr]] || 'current');
   });
