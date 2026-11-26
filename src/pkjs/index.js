@@ -3,6 +3,7 @@ var clayConfig = require('./config');
 var teams = require('./teams');
 var colors = require('./colors');
 var chooseTeam = require('./followed').chooseTeam;
+var settings = require('./settings');
 var teamGames = require('./schedule').teamGames;
 var nextOrDelayed = require('./schedule').nextOrDelayed;
 var awayToday = require('./schedule').awayToday;
@@ -54,27 +55,15 @@ var PUCK_DROP_WATCH_MS = 15 * 60 * 1000;
 // During intermission, check this often until its last few minutes.
 var INTERMISSION_POLL_MS = 2 * 60 * 1000;
 var INTERMISSION_END_SECS = 150;
-// How long the watch shows the goal banner unless set otherwise.
-var GOAL_BANNER_SECS = 30;
 // How many times to check for a goal that's in the score but not the goal list yet,
 // LIVE_POLL_MS apart.
 var GOAL_BANNER_TRIES = 9;
 // How long a game that just ended keeps the face before another followed team's game.
 var FINAL_HOLD_MS = 2 * 60 * 1000;
 
-function getTeam() {
-  var team = localStorage.getItem('team');
-  return teams[team] ? team : 'VGK';
-}
-
-// The followed teams, team 1 first, without repeats.
-function getTeams() {
-  var list = [getTeam()];
-  ['team2', 'team3'].forEach(function(key) {
-    var team = localStorage.getItem(key);
-    if (teams[team] && list.indexOf(team) < 0) list.push(team);
-  });
-  return list;
+// Everything picked on the settings page.
+function getSettings() {
+  return settings.read(localStorage);
 }
 
 function getJSON(url, callback) {
@@ -100,9 +89,7 @@ function getJSON(url, callback) {
 // The team's colors: its current ones, or the classic scheme picked in settings.
 function teamScheme(team) {
   var info = teams[team];
-  var id = localStorage.getItem('classic' + team);
-  // Before the Classic colors picker, the Kings had a toggle for their 1998 scheme.
-  if (!id && team === 'LAK' && localStorage.getItem('kingsClassic') === '1') id = '1998';
+  var id = getSettings().classics[team];
   var picked = (info.classics || []).filter(function(c) { return c.id === id; })[0];
   return picked || info;
 }
@@ -143,7 +130,7 @@ function buildGameFields(team, games, liveScore) {
     msg[keys.GameLine2] = scoreLine(g);
     // Only the scoreboard has shots; without it, or with shots turned off in settings,
     // the watch keeps the record row.
-    if (liveScore && localStorage.getItem('showShots') !== '0') {
+    if (liveScore && getSettings().showShots) {
       msg[keys.GameAwayShots] = String(g.awayTeam.sog || 0);
       msg[keys.GameHomeShots] = String(g.homeTeam.sog || 0);
     }
@@ -315,14 +302,6 @@ function goalsScored(team, game) {
   };
 }
 
-// Which goals to buzz for: 'off', 'mine', or 'both'.
-function goalVibe() {
-  var mode = localStorage.getItem('goalVibe');
-  if (mode) return mode;
-  // Before the opponent option, this was an on/off setting for the team's goals.
-  return localStorage.getItem('vibeOnGoal') === '1' ? 'mine' : 'off';
-}
-
 function abbrevOf(team) {
   return typeof team === 'string' ? team : team && team['default'];
 }
@@ -367,7 +346,7 @@ function addGoalBanner(team, game, score, msg) {
   msg[keys.GoalAssists] = g.assists;
   msg[keys.GoalTime] = g.time;
   msg[keys.GoalScore] = g.score;
-  var secs = parseInt(localStorage.getItem('bannerSecs'), 10) || GOAL_BANNER_SECS;
+  var secs = getSettings().bannerSecs;
   msg[keys.GoalBannerSecs] = secs;
   localStorage.setItem('goalBanner', JSON.stringify({ id: game.id, score: g.score, until: Date.now() + secs * 1000 }));
   return true;
@@ -403,15 +382,6 @@ function sendGoalBanner(team, game, score, tries) {
       }
     });
   }, LIVE_POLL_MS);
-}
-
-// Whether to show the goal banner when the team scores.
-function goalBanner() {
-  var mode = localStorage.getItem('goalAlert');
-  // Phone notifications were an option too; those who used them get the banner.
-  if (mode) return mode !== 'off';
-  // Before the banner, this was an on/off notification setting.
-  return localStorage.getItem('goalNotify') === '1';
 }
 
 // Calls back with the scoreboard entry, including its goal list, for a game.
@@ -464,20 +434,20 @@ function gameEvents(team, games, liveScore, msg) {
   var game = games.live || games.recentFinal;
   var goals = goalsScored(team, liveScore || game);
   var scored = goals.mine;
-  var vibe = goalVibe();
+  var picks = getSettings();
+  var vibe = picks.goalVibe;
   if (scored && vibe !== 'off') {
     msg[keys.GoalScored] = GOAL_MINE;
   } else if (goals.opp && vibe === 'both') {
     msg[keys.GoalScored] = GOAL_OPP;
   }
-  var banner = goalBanner();
+  var banner = picks.goalBanner;
   if (scored && banner && !(liveScore && addGoalBanner(team, liveScore, goals.score, msg))) {
     sendGoalBanner(team, game, goals.score, GOAL_BANNER_TRIES);
   }
   var rescored = !scored && banner && updateGoalBanner(liveScore || game, msg);
   var buzz = stageBuzz(games, liveScore);
-  if ((buzz === BUZZ_PERIOD && localStorage.getItem('vibeOnPeriod') === '1') ||
-      (buzz === BUZZ_FINAL && localStorage.getItem('vibeOnFinal') === '1')) {
+  if ((buzz === BUZZ_PERIOD && picks.vibeOnPeriod) || (buzz === BUZZ_FINAL && picks.vibeOnFinal)) {
     msg[keys.GameBuzz] = buzz;
   }
   return scored > 0 || goals.opp > 0 || rescored || buzz !== 0;
@@ -573,7 +543,7 @@ function showTeam(team, schedule, standings, others) {
   var msg = {};
   msg[keys.TeamName] = info.name.toUpperCase();
   msg[keys.TeamAbbrev] = team;
-  msg[keys.VibeOnDisconnect] = localStorage.getItem('vibeOnDisconnect') === '1' ? 1 : 0;
+  msg[keys.VibeOnDisconnect] = getSettings().vibeOnDisconnect ? 1 : 0;
   var scheme = teamScheme(team);
   colors.applyScheme(msg, scheme, false);
   if (standings) {
@@ -591,8 +561,7 @@ function showTeam(team, schedule, standings, others) {
     var games = teamGames(schedule, Date.now());
     var playoffs = bracket && buildPlayoffFields(team, bracket, games);
     for (var p in playoffs) msg[p] = playoffs[p];
-    var awayColors = localStorage.getItem('awayColors') !== '0';
-    colors.applyScheme(msg, scheme, awayColors && awayToday(team, schedule, Date.now()));
+    colors.applyScheme(msg, scheme, getSettings().awayColors && awayToday(team, schedule, Date.now()));
     function finish(liveScore) {
       msg[keys.RefreshMins] = others.reduce(function(mins, other) {
         return Math.min(mins, refreshMinutes(other.games, null));
@@ -638,7 +607,7 @@ function showTeam(team, schedule, standings, others) {
 // Fetches every followed team's schedule, then shows the one chooseTeam picks. If any
 // schedule is missing, stays on the team already showing rather than choosing without it.
 function update() {
-  var followed = getTeams();
+  var followed = getSettings().followedTeams;
   var standings = null, schedules = {};
   var pending = followed.length + 1;
   function done() {
@@ -683,22 +652,6 @@ Pebble.addEventListener('showConfiguration', function() {
 
 Pebble.addEventListener('webviewclosed', function(e) {
   if (!e || !e.response) return;
-  var settings = clay.getSettings(e.response);
-  var team = settings[keys.ConfigTeam];
-  if (teams[team]) localStorage.setItem('team', team);
-  localStorage.setItem('team2', settings[keys.ConfigTeam2] || 'none');
-  localStorage.setItem('team3', settings[keys.ConfigTeam3] || 'none');
-  localStorage.setItem('awayColors', settings[keys.ConfigAwayColors] ? '1' : '0');
-  localStorage.setItem('showShots', settings[keys.ConfigShowShots] ? '1' : '0');
-  Object.keys(teams).forEach(function(abbr) {
-    if (teams[abbr].classics) localStorage.setItem('classic' + abbr, settings[keys['ConfigClassic' + abbr]] || 'current');
-  });
-  var vibe = settings[keys.ConfigVibeOnGoal];
-  localStorage.setItem('goalVibe', vibe === 'mine' || vibe === 'both' ? vibe : 'off');
-  localStorage.setItem('goalAlert', settings[keys.ConfigGoalBanner] ? 'banner' : 'off');
-  localStorage.setItem('bannerSecs', String(parseInt(settings[keys.ConfigBannerSecs], 10) || GOAL_BANNER_SECS));
-  localStorage.setItem('vibeOnPeriod', settings[keys.ConfigVibeOnPeriod] ? '1' : '0');
-  localStorage.setItem('vibeOnFinal', settings[keys.ConfigVibeOnFinal] ? '1' : '0');
-  localStorage.setItem('vibeOnDisconnect', settings[keys.VibeOnDisconnect] ? '1' : '0');
+  settings.saveFromConfig(localStorage, clay.getSettings(e.response));
   update();
 });

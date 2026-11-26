@@ -27,4 +27,16 @@ function schedule() {
   return { games: Array.prototype.slice.call(arguments) };
 }
 
-module.exports = { H: H, NOW: NOW, game: game, schedule: schedule };
+// A stand-in for the phone's localStorage, starting with values.
+function fakeLocalStorage(values) {
+  var data = {};
+  for (var k in values || {}) data[k] = String(values[k]);
+  return {
+    data: data,
+    getItem: function(key) { return key in data ? data[key] : null; },
+    setItem: function(key, value) { data[key] = String(value); },
+    removeItem: function(key) { delete data[key]; }
+  };
+}
+
+module.exports = { H: H, NOW: NOW, game: game, schedule: schedule, fakeLocalStorage: fakeLocalStorage };
