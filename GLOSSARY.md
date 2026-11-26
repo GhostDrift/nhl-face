@@ -20,6 +20,18 @@ _Avoid_: Visible team, current team
 A followed team's first game whose scheduled puck drop is still ahead and that hasn't been postponed, suspended or cancelled. A game delayed past its scheduled puck drop is no longer the next game, even before it starts.
 _Avoid_: Upcoming game, future game
 
+**Delayed game**:
+A game whose scheduled puck drop has passed but that hasn't started. The face shows it ahead of the next game.
+_Avoid_: Late game, pending game
+
+**Recent final**:
+A followed team's game that finished within 6 hours of its puck drop. The face shows it until then.
+_Avoid_: Recent game, last game, result
+
+**Called-off game**:
+A postponed, suspended or cancelled game.
+_Avoid_: Stopped game, off game
+
 **Postponed game**:
 A game the NHL has called off before it started, to be played on a date set later.
 _Avoid_: Delayed game, rescheduled game
