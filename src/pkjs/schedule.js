@@ -62,6 +62,19 @@ function nextOrDelayed(games) {
   return games.delayed || games.next;
 }
 
+// A teamGames pick with only game, as kind, such as 'live'.
+function onlyGame(kind, game) {
+  var games = { live: null, suspended: null, recentFinal: null, delayed: null, next: null };
+  games[kind] = game;
+  return games;
+}
+
+// games, from teamGames, with scoreboard's game as the live game when the scoreboard
+// shows it live before the schedule does, as it can at puck drop.
+function withScoreboard(games, scoreboard) {
+  return !games.live && scoreboard && isLive(scoreboard) ? onlyGame('live', scoreboard) : games;
+}
+
 // True when the team plays an away game today, by the phone's clock. Postponed and
 // cancelled games aren't played, so don't count.
 function awayToday(team, schedule, now) {
@@ -88,6 +101,8 @@ function getPlayoffSeasonId(schedule) {
 module.exports = {
   teamGames: teamGames,
   nextOrDelayed: nextOrDelayed,
+  onlyGame: onlyGame,
+  withScoreboard: withScoreboard,
   awayToday: awayToday,
   getPlayoffSeasonId: getPlayoffSeasonId,
   isLive: isLive,
