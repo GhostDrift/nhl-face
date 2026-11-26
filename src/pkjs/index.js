@@ -11,6 +11,8 @@ var getPlayoffSeasonId = require('./schedule').getPlayoffSeasonId;
 var isLive = require('./schedule').isLive;
 var isOver = require('./schedule').isOver;
 var isCalledOff = require('./schedule').isCalledOff;
+var gameEvents = require('./game-events');
+var periodLabel = gameEvents.periodLabel, scoreLine = gameEvents.scoreLine, ordinal = gameEvents.ordinal;
 var keys = require('message_keys');
 
 // Runs in the settings page: shows only the picked teams' Classic colors options.
@@ -42,9 +44,6 @@ var STATE_NONE = 0, STATE_NEXT = 1, STATE_LIVE = 2, STATE_FINAL = 3;
 var BUZZ_PERIOD = 1, BUZZ_FINAL = 2;
 // Which team a goal buzz is for.
 var GOAL_MINE = 1, GOAL_OPP = 2;
-// Game stages, in order: before puck drop, then each period in play (odd) and the
-// intermission after it (even), then final.
-var STAGE_PREGAME = 0, STAGE_FINAL = 99;
 // While a game is live, check the scoreboard this often between the regular
 // once-a-minute updates. The NHL feed is cached for about this long, so faster
 // polling would just fetch the same data again.
@@ -92,25 +91,6 @@ function teamScheme(team) {
   var id = getSettings().classics[team];
   var picked = (info.classics || []).filter(function(c) { return c.id === id; })[0];
   return picked || info;
-}
-
-function ordinal(n) {
-  return n + (['th', 'st', 'nd', 'rd'][n] || 'th');
-}
-
-function periodLabel(desc) {
-  if (!desc) return '';
-  if (desc.periodType === 'SO') return 'SO';
-  if (desc.periodType === 'OT') {
-    var ot = desc.number - (desc.maxRegulationPeriods || 3);
-    return ot > 1 ? ot + 'OT' : 'OT';
-  }
-  return ordinal(desc.number);
-}
-
-function scoreLine(game) {
-  return game.awayTeam.abbrev + ' ' + (game.awayTeam.score || 0) + '  @  ' +
-         game.homeTeam.abbrev + ' ' + (game.homeTeam.score || 0);
 }
 
 // The game to show, from games, teamGames' pick: a live game, a suspended game, a
@@ -281,89 +261,27 @@ function buildPlayoffFields(team, bracket, games) {
   return msg;
 }
 
-// How many goals the team (mine) and its opponent (opp) scored in this game since
-// the last check. The first look at a game only records its score, so joining
-// mid-game doesn't count.
-function goalsScored(team, game) {
-  var none = { mine: 0, opp: 0, score: 0 };
-  if (!game) return none;
-  var home = game.homeTeam.abbrev === team;
-  var mine = (home ? game.homeTeam : game.awayTeam).score || 0;
-  var opp = (home ? game.awayTeam : game.homeTeam).score || 0;
-  var last = null;
-  try { last = JSON.parse(localStorage.getItem('lastScore')); } catch (e) {}
-  localStorage.setItem('lastScore', JSON.stringify({ id: game.id, score: mine, opp: opp }));
-  if (!last || last.id !== game.id) return none;
-  return {
-    mine: Math.max(mine - last.score, 0),
-    score: mine,
-    // Scores saved before the opponent's was tracked don't have it.
-    opp: last.opp === undefined ? 0 : Math.max(opp - last.opp, 0)
-  };
+// What was seen at the last game-events check, kept between checks.
+function loadLastSeen() {
+  try { return JSON.parse(localStorage.getItem('lastSeen')); } catch (e) { return null; }
 }
 
-function abbrevOf(team) {
-  return typeof team === 'string' ? team : team && team['default'];
+function saveLastSeen(lastSeen) {
+  localStorage.setItem('lastSeen', JSON.stringify(lastSeen));
 }
 
-// The parts of one goal from the scoreboard's goal list, for a notification or banner.
-function goalParts(game, goal) {
-  var tags = [];
-  if (goal.strength === 'pp') tags.push('PP');
-  if (goal.strength === 'sh') tags.push('SH');
-  // Including goals awarded because the net was empty when a scoring chance was fouled.
-  if (/empty-net$/.test(goal.goalModifier || '')) tags.push('EN');
-  var assists = (goal.assists || []).map(function(a) { return a.name['default']; });
-  return {
-    team: abbrevOf(goal.teamAbbrev),
-    scorer: goal.name['default'],
-    assists: assists.length ? assists.join(', ') : 'Unassisted',
-    time: periodLabel(goal.periodDescriptor) + ' ' + goal.timeInPeriod + (tags.length ? ' ' + tags.join(' ') : ''),
-    score: bannerScore(game, goal.awayScore, goal.homeScore)
-  };
-}
-
-function bannerScore(game, away, home) {
-  return game.awayTeam.abbrev + ' ' + away + '  @  ' + game.homeTeam.abbrev + ' ' + home;
-}
-
-// The team's goal that brought its score to score, or null if the scoreboard's goal
-// list doesn't have it. The score can update before the goal list does.
-function teamGoal(team, game, score) {
-  var home = game.homeTeam.abbrev === team;
-  return (game.goals || []).filter(function(g) {
-    return abbrevOf(g.teamAbbrev) === team && (home ? g.homeScore : g.awayScore) === score;
-  })[0] || null;
-}
-
-// Adds the banner fields for the team's goal that brought its score to score to
-// msg. Returns false if the goal isn't in the game's goal list yet.
-function addGoalBanner(team, game, score, msg) {
-  var goal = teamGoal(team, game, score);
-  if (!goal) return false;
-  var g = goalParts(game, goal);
-  msg[keys.GoalScorer] = g.scorer;
-  msg[keys.GoalAssists] = g.assists;
-  msg[keys.GoalTime] = g.time;
-  msg[keys.GoalScore] = g.score;
-  var secs = getSettings().bannerSecs;
-  msg[keys.GoalBannerSecs] = secs;
-  localStorage.setItem('goalBanner', JSON.stringify({ id: game.id, score: g.score, until: Date.now() + secs * 1000 }));
-  return true;
-}
-
-// Adds the game's current score to msg if it changed while the goal banner is up,
-// such as the other team scoring right after. Returns true if it did.
-function updateGoalBanner(game, msg) {
-  var banner = null;
-  try { banner = JSON.parse(localStorage.getItem('goalBanner')); } catch (e) {}
-  if (!game || !banner || banner.id !== game.id || Date.now() > banner.until) return false;
-  var score = scoreLine(game);
-  if (score === banner.score) return false;
-  banner.score = score;
-  localStorage.setItem('goalBanner', JSON.stringify(banner));
-  msg[keys.GoalScore] = score;
-  return true;
+// Adds what game-events found, from check or bannerFor, to msg for the watch.
+function addEvents(msg, events) {
+  if (events.goal) msg[keys.GoalScored] = events.goal === 'mine' ? GOAL_MINE : GOAL_OPP;
+  var banner = events.banner;
+  if (banner && banner.scorer !== undefined) {
+    msg[keys.GoalScorer] = banner.scorer;
+    msg[keys.GoalAssists] = banner.assists;
+    msg[keys.GoalTime] = banner.time;
+    msg[keys.GoalBannerSecs] = banner.secs;
+  }
+  if (banner) msg[keys.GoalScore] = banner.score;
+  if (events.stage) msg[keys.GameBuzz] = events.stage === 'period' ? BUZZ_PERIOD : BUZZ_FINAL;
 }
 
 // Sends the banner for the team's goal that brought its score to score once the
@@ -371,12 +289,13 @@ function updateGoalBanner(game, msg) {
 function sendGoalBanner(team, game, score, tries) {
   setTimeout(function() {
     getScoreboardGame(game, function(found) {
-      var last = null;
-      try { last = JSON.parse(localStorage.getItem('lastScore')); } catch (e) {}
-      if (last && last.id === game.id && last.score !== score) return;
-      var banner = {};
-      if (found && addGoalBanner(team, found, score, banner)) {
-        sendToWatch(banner);
+      var result = gameEvents.bannerFor(loadLastSeen(), team, game.id, found, score, getSettings(), Date.now());
+      if (result.outdated) return;
+      if (result.banner) {
+        saveLastSeen(result.lastSeen);
+        var msg = {};
+        addEvents(msg, result);
+        sendToWatch(msg);
       } else if (tries > 1) {
         sendGoalBanner(team, game, score, tries - 1);
       }
@@ -397,60 +316,17 @@ function getScoreboardGame(game, callback) {
   });
 }
 
-// The tracked game's current stage, or null when it can't be told this update. A
-// suspended game has none, so it never counts as ending.
-function gameStage(games, liveScore) {
-  if (games.live) {
-    if (!liveScore || !liveScore.periodDescriptor) return null;
-    var stage = liveScore.periodDescriptor.number * 2 - 1;
-    if (liveScore.clock && liveScore.clock.inIntermission) stage += 1;
-    return { id: games.live.id, stage: stage };
+// Runs the game-events check for team's game, from games, and adds whatever the watch
+// should buzz for or show to msg; a goal banner not ready yet is sent later. liveScore
+// is the game's scoreboard entry, if fetched. Returns true if anything happened.
+function checkGame(team, games, liveScore, msg) {
+  var events = gameEvents.check(loadLastSeen(), team, games, liveScore, getSettings(), Date.now());
+  saveLastSeen(events.lastSeen);
+  addEvents(msg, events);
+  if (events.bannerWaiting !== null) {
+    sendGoalBanner(team, games.live || games.recentFinal, events.bannerWaiting, GOAL_BANNER_TRIES);
   }
-  if (games.suspended) return null;
-  if (games.recentFinal) return { id: games.recentFinal.id, stage: STAGE_FINAL };
-  var upcoming = nextOrDelayed(games);
-  if (upcoming) return { id: upcoming.id, stage: STAGE_PREGAME };
-  return null;
-}
-
-// BUZZ_PERIOD or BUZZ_FINAL when a period started or ended, or the game ended, since
-// the last check, else 0. Only changes seen happen count, so joining late doesn't buzz.
-function stageBuzz(games, liveScore) {
-  var cur = gameStage(games, liveScore);
-  if (!cur) return 0;
-  var last = null;
-  try { last = JSON.parse(localStorage.getItem('lastStage')); } catch (e) {}
-  localStorage.setItem('lastStage', JSON.stringify(cur));
-  if (!last || last.id !== cur.id || cur.stage <= last.stage) return 0;
-  if (cur.stage === STAGE_FINAL) return last.stage > STAGE_PREGAME ? BUZZ_FINAL : 0;
-  return BUZZ_PERIOD;
-}
-
-// Runs the goal, period, and final checks for a game and adds whatever the watch
-// should buzz for to msg; a goal banner not ready yet is sent later. liveScore is the
-// game's scoreboard entry, if fetched. Returns true if anything happened.
-function gameEvents(team, games, liveScore, msg) {
-  // Include the just-finished game so a game-ending goal still counts.
-  var game = games.live || games.recentFinal;
-  var goals = goalsScored(team, liveScore || game);
-  var scored = goals.mine;
-  var picks = getSettings();
-  var vibe = picks.goalVibe;
-  if (scored && vibe !== 'off') {
-    msg[keys.GoalScored] = GOAL_MINE;
-  } else if (goals.opp && vibe === 'both') {
-    msg[keys.GoalScored] = GOAL_OPP;
-  }
-  var banner = picks.goalBanner;
-  if (scored && banner && !(liveScore && addGoalBanner(team, liveScore, goals.score, msg))) {
-    sendGoalBanner(team, game, goals.score, GOAL_BANNER_TRIES);
-  }
-  var rescored = !scored && banner && updateGoalBanner(liveScore || game, msg);
-  var buzz = stageBuzz(games, liveScore);
-  if ((buzz === BUZZ_PERIOD && picks.vibeOnPeriod) || (buzz === BUZZ_FINAL && picks.vibeOnFinal)) {
-    msg[keys.GameBuzz] = buzz;
-  }
-  return scored > 0 || goals.opp > 0 || rescored || buzz !== 0;
+  return events.changed;
 }
 
 // A teamGames pick with only game, as kind, such as 'live'.
@@ -508,7 +384,7 @@ function startLivePoll(team, game) {
       if (found && !off && (isLive(found) || over)) {
         var games = onlyGame(over ? 'recentFinal' : 'live', found);
         var msg = {};
-        if (gameEvents(team, games, found, msg)) {
+        if (checkGame(team, games, found, msg)) {
           var gm = buildGameFields(team, games, found);
           for (var k in gm) msg[k] = gm[k];
           msg[keys.RefreshMins] = refreshMinutes(games, found);
@@ -574,7 +450,7 @@ function showTeam(team, schedule, standings, others) {
         gm[keys.GameLine2] = status[1];
       }
       for (var k in gm) msg[k] = gm[k];
-      gameEvents(team, games, liveScore, msg);
+      checkGame(team, games, liveScore, msg);
       sendToWatch(msg);
     }
     var upcoming = nextOrDelayed(games);
