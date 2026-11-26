@@ -3,6 +3,13 @@ var clayConfig = require('./config');
 var teams = require('./teams');
 var colors = require('./colors');
 var chooseTeam = require('./followed').chooseTeam;
+var teamGames = require('./schedule').teamGames;
+var nextOrDelayed = require('./schedule').nextOrDelayed;
+var awayToday = require('./schedule').awayToday;
+var getPlayoffSeasonId = require('./schedule').getPlayoffSeasonId;
+var isLive = require('./schedule').isLive;
+var isOver = require('./schedule').isOver;
+var isCalledOff = require('./schedule').isCalledOff;
 var keys = require('message_keys');
 
 // Runs in the settings page: shows only the picked teams' Classic colors options.
@@ -52,8 +59,6 @@ var GOAL_BANNER_SECS = 30;
 // How many times to check for a goal that's in the score but not the goal list yet,
 // LIVE_POLL_MS apart.
 var GOAL_BANNER_TRIES = 9;
-// Show a finished game's final score until this long after puck drop.
-var FINAL_WINDOW_MS = 6 * 60 * 60 * 1000;
 // How long a game that just ended keeps the face before another followed team's game.
 var FINAL_HOLD_MS = 2 * 60 * 1000;
 
@@ -121,40 +126,14 @@ function scoreLine(game) {
          game.homeTeam.abbrev + ' ' + (game.homeTeam.score || 0);
 }
 
-function isLive(state) { return state === 'LIVE' || state === 'CRIT'; }
-function isDone(state) { return state === 'FINAL' || state === 'OFF'; }
-
-// True when the team plays an away game today, phone local time.
-function awayToday(team, schedule) {
-  var today = new Date().toDateString();
-  return schedule.games.some(function(g) {
-    return g.gameScheduleState !== 'CNCL' && g.awayTeam.abbrev === team &&
-           new Date(Date.parse(g.startTimeUTC)).toDateString() === today;
-  });
-}
-
-// Picks the game to show: a live one, a recently finished one, or the next one.
-function pickGames(schedule) {
-  var now = Date.now();
-  var live = null, recent = null, next = null;
-  schedule.games.forEach(function(g) {
-    var start = Date.parse(g.startTimeUTC);
-    if (isLive(g.gameState)) {
-      live = g;
-    } else if (isDone(g.gameState)) {
-      if (now - start < FINAL_WINDOW_MS) recent = g;
-    } else if (!next && g.gameScheduleState !== 'CNCL' && start > now - FINAL_WINDOW_MS) {
-      next = g;
-    }
-  });
-  return { live: live, recent: recent, next: next };
-}
-
-function buildGameFields(team, picked, liveScore) {
+// The game to show, from games, teamGames' pick: a live game, a suspended game, a
+// recent final, or else the delayed or next game.
+function buildGameFields(team, games, liveScore) {
   var msg = {};
   var g;
-  if (picked.live) {
-    g = liveScore || picked.live;
+  var upcoming = nextOrDelayed(games);
+  if (games.live) {
+    g = liveScore || games.live;
     var status = periodLabel(g.periodDescriptor);
     if (g.clock) {
       status += g.clock.inIntermission ? ' INT' : ' ' + g.clock.timeRemaining;
@@ -168,14 +147,18 @@ function buildGameFields(team, picked, liveScore) {
       msg[keys.GameAwayShots] = String(g.awayTeam.sog || 0);
       msg[keys.GameHomeShots] = String(g.homeTeam.sog || 0);
     }
-  } else if (picked.recent) {
-    g = picked.recent;
+  } else if (games.suspended) {
+    msg[keys.GameState] = STATE_FINAL;
+    msg[keys.GameLine1] = 'SUSPENDED';
+    msg[keys.GameLine2] = scoreLine(games.suspended);
+  } else if (games.recentFinal) {
+    g = games.recentFinal;
     var last = g.gameOutcome && g.gameOutcome.lastPeriodType;
     msg[keys.GameState] = STATE_FINAL;
     msg[keys.GameLine1] = 'FINAL' + (last && last !== 'REG' ? '/' + last : '');
     msg[keys.GameLine2] = scoreLine(g);
-  } else if (picked.next) {
-    g = picked.next;
+  } else if (upcoming) {
+    g = upcoming;
     var home = g.homeTeam.abbrev === team;
     msg[keys.GameState] = STATE_NEXT;
     msg[keys.GameStart] = Math.floor(Date.parse(g.startTimeUTC) / 1000);
@@ -192,13 +175,14 @@ function nearStart(game) {
   return !!game && Date.parse(game.startTimeUTC) - Date.now() < PUCK_DROP_WATCH_MS;
 }
 
-function refreshMinutes(picked, liveScore) {
-  if (picked.live) {
+function refreshMinutes(games, liveScore) {
+  if (games.live) {
     var clock = liveScore && liveScore.clock;
     return clock && clock.inIntermission ? 5 : 1;
   }
-  if (picked.next) {
-    var mins = (Date.parse(picked.next.startTimeUTC) - Date.now()) / 60000;
+  var upcoming = nextOrDelayed(games);
+  if (upcoming) {
+    var mins = (Date.parse(upcoming.startTimeUTC) - Date.now()) / 60000;
     if (mins < 60) return 5;
   }
   return 30;
@@ -229,18 +213,6 @@ function buildStandingsFields(team, standings) {
     msg[keys.LeagueRank] = '';
   }
   return msg;
-}
-
-// The season whose playoffs the team is in, once its regular season is over: its
-// schedule has playoff games and no regular season games left. Else null.
-function playoffSeason(schedule) {
-  var playoff = null;
-  for (var i = 0; i < schedule.games.length; i++) {
-    var g = schedule.games[i];
-    if (g.gameType === 2 && !isDone(g.gameState) && g.gameScheduleState !== 'CNCL') return null;
-    if (g.gameType === 3) playoff = g;
-  }
-  return playoff && playoff.season;
 }
 
 // Playoff labels for the big screen, and shorter ones that fit the others.
@@ -294,7 +266,7 @@ function seasonStatus(team, standings, bracket) {
 // The stat bubbles during the playoffs, from the season's bracket: the latest series'
 // round and standing, the game number in it, the playoff record, and the wins left
 // to win the Cup. Null if the team isn't in the bracket.
-function buildPlayoffFields(team, bracket, picked) {
+function buildPlayoffFields(team, bracket, games) {
   var series = teamSeries(team, bracket);
   if (!series.length) return null;
   var won = 0, lost = 0, toCup = 0, cur = series[series.length - 1];
@@ -308,7 +280,7 @@ function buildPlayoffFields(team, bracket, picked) {
   var standing = cur.mine >= cur.needed ? 'WON' : cur.opp >= cur.needed ? 'LOST' :
                  cur.mine > cur.opp ? 'LEAD' : cur.mine < cur.opp ? 'DOWN' : 'TIED';
   // The game on now or next in the series, if it's scheduled.
-  var game = picked.live || picked.next;
+  var game = games.live || nextOrDelayed(games);
   var number = game && game.gameType === 3 && game.seriesStatus && game.seriesStatus.gameNumberOfSeries;
   var msg = {};
   msg[keys.RecordLabel] = labels.rounds[cur.round - 1] || 'ROUND ' + cur.round;
@@ -455,23 +427,26 @@ function getScoreboardGame(game, callback) {
   });
 }
 
-// The tracked game's current stage, or null when it can't be told this update.
-function gameStage(picked, liveScore) {
-  if (picked.live) {
+// The tracked game's current stage, or null when it can't be told this update. A
+// suspended game has none, so it never counts as ending.
+function gameStage(games, liveScore) {
+  if (games.live) {
     if (!liveScore || !liveScore.periodDescriptor) return null;
     var stage = liveScore.periodDescriptor.number * 2 - 1;
     if (liveScore.clock && liveScore.clock.inIntermission) stage += 1;
-    return { id: picked.live.id, stage: stage };
+    return { id: games.live.id, stage: stage };
   }
-  if (picked.recent) return { id: picked.recent.id, stage: STAGE_FINAL };
-  if (picked.next) return { id: picked.next.id, stage: STAGE_PREGAME };
+  if (games.suspended) return null;
+  if (games.recentFinal) return { id: games.recentFinal.id, stage: STAGE_FINAL };
+  var upcoming = nextOrDelayed(games);
+  if (upcoming) return { id: upcoming.id, stage: STAGE_PREGAME };
   return null;
 }
 
 // BUZZ_PERIOD or BUZZ_FINAL when a period started or ended, or the game ended, since
 // the last check, else 0. Only changes seen happen count, so joining late doesn't buzz.
-function stageBuzz(picked, liveScore) {
-  var cur = gameStage(picked, liveScore);
+function stageBuzz(games, liveScore) {
+  var cur = gameStage(games, liveScore);
   if (!cur) return 0;
   var last = null;
   try { last = JSON.parse(localStorage.getItem('lastStage')); } catch (e) {}
@@ -484,9 +459,9 @@ function stageBuzz(picked, liveScore) {
 // Runs the goal, period, and final checks for a game and adds whatever the watch
 // should buzz for to msg; a goal banner not ready yet is sent later. liveScore is the
 // game's scoreboard entry, if fetched. Returns true if anything happened.
-function gameEvents(team, picked, liveScore, msg) {
+function gameEvents(team, games, liveScore, msg) {
   // Include the just-finished game so a game-ending goal still counts.
-  var game = picked.live || picked.recent;
+  var game = games.live || games.recentFinal;
   var goals = goalsScored(team, liveScore || game);
   var scored = goals.mine;
   var vibe = goalVibe();
@@ -500,12 +475,19 @@ function gameEvents(team, picked, liveScore, msg) {
     sendGoalBanner(team, game, goals.score, GOAL_BANNER_TRIES);
   }
   var rescored = !scored && banner && updateGoalBanner(liveScore || game, msg);
-  var buzz = stageBuzz(picked, liveScore);
+  var buzz = stageBuzz(games, liveScore);
   if ((buzz === BUZZ_PERIOD && localStorage.getItem('vibeOnPeriod') === '1') ||
       (buzz === BUZZ_FINAL && localStorage.getItem('vibeOnFinal') === '1')) {
     msg[keys.GameBuzz] = buzz;
   }
   return scored > 0 || goals.opp > 0 || rescored || buzz !== 0;
+}
+
+// A teamGames pick with only game, as kind, such as 'live'.
+function onlyGame(kind, game) {
+  var games = { live: null, suspended: null, recentFinal: null, delayed: null, next: null };
+  games[kind] = game;
+  return games;
 }
 
 // The live game being polled between regular updates, if any.
@@ -519,7 +501,7 @@ function stopLivePoll() {
 // How long until the next scoreboard check: less often through most of an
 // intermission, since nothing happens until the next period starts.
 function pollDelay(found) {
-  var clock = found && isLive(found.gameState) && found.clock;
+  var clock = found && isLive(found) && found.clock;
   if (clock && clock.inIntermission && clock.secondsRemaining > INTERMISSION_END_SECS) {
     return Math.min(INTERMISSION_POLL_MS, (clock.secondsRemaining - INTERMISSION_END_SECS) * 1000);
   }
@@ -549,14 +531,17 @@ function startLivePoll(team, game) {
   function tick() {
     getScoreboardGame(game, function(found) {
       if (livePoll !== poll) return;
-      var over = found && isDone(found.gameState);
-      if (found && (isLive(found.gameState) || over)) {
-        var picked = over ? { recent: found } : { live: found };
+      // A suspended game is over for now, though not finished, so it ends the polling
+      // without any events.
+      var off = found && isCalledOff(found);
+      var over = found && (isOver(found) || off);
+      if (found && !off && (isLive(found) || over)) {
+        var games = onlyGame(over ? 'recentFinal' : 'live', found);
         var msg = {};
-        if (gameEvents(team, picked, found, msg)) {
-          var gm = buildGameFields(team, picked, found);
+        if (gameEvents(team, games, found, msg)) {
+          var gm = buildGameFields(team, games, found);
           for (var k in gm) msg[k] = gm[k];
-          msg[keys.RefreshMins] = refreshMinutes(picked, found);
+          msg[keys.RefreshMins] = refreshMinutes(games, found);
           sendToWatch(msg);
         }
       }
@@ -603,16 +588,16 @@ function showTeam(team, schedule, standings, others) {
 
   // Adds the game, and the playoff stats from bracket if given, and sends it all.
   function showGame(bracket) {
-    var picked = pickGames(schedule);
-    var playoffs = bracket && buildPlayoffFields(team, bracket, picked);
+    var games = teamGames(schedule, Date.now());
+    var playoffs = bracket && buildPlayoffFields(team, bracket, games);
     for (var p in playoffs) msg[p] = playoffs[p];
     var awayColors = localStorage.getItem('awayColors') !== '0';
-    colors.applyScheme(msg, scheme, awayColors && awayToday(team, schedule));
+    colors.applyScheme(msg, scheme, awayColors && awayToday(team, schedule, Date.now()));
     function finish(liveScore) {
       msg[keys.RefreshMins] = others.reduce(function(mins, other) {
-        return Math.min(mins, refreshMinutes(other.picked, null));
-      }, refreshMinutes(picked, liveScore));
-      var gm = buildGameFields(team, picked, liveScore);
+        return Math.min(mins, refreshMinutes(other.games, null));
+      }, refreshMinutes(games, liveScore));
+      var gm = buildGameFields(team, games, liveScore);
       // With no game to show, say where the season stands instead.
       var status = gm[keys.GameState] === STATE_NONE && seasonStatus(team, standings, bracket);
       if (status) {
@@ -620,10 +605,11 @@ function showTeam(team, schedule, standings, others) {
         gm[keys.GameLine2] = status[1];
       }
       for (var k in gm) msg[k] = gm[k];
-      gameEvents(team, picked, liveScore, msg);
+      gameEvents(team, games, liveScore, msg);
       sendToWatch(msg);
     }
-    var game = picked.live || (nearStart(picked.next) && picked.next);
+    var upcoming = nextOrDelayed(games);
+    var game = games.live || (nearStart(upcoming) && upcoming);
     if (!game) {
       stopLivePoll();
       finish(null);
@@ -633,12 +619,12 @@ function showTeam(team, schedule, standings, others) {
     // The schedule lacks the period clock and lags at puck drop, so check the
     // daily scoreboard too.
     getScoreboardGame(game, function(found) {
-      if (!picked.live && found && isLive(found.gameState)) picked = { live: found };
-      finish(picked.live ? found : null);
+      if (!games.live && found && isLive(found)) games = onlyGame('live', found);
+      finish(games.live ? found : null);
     });
   }
 
-  var season = playoffSeason(schedule);
+  var season = getPlayoffSeasonId(schedule);
   if (!season) {
     showGame(null);
     return;
@@ -664,7 +650,7 @@ function update() {
       return;
     }
     var entries = followed.map(function(team) {
-      return { team: team, picked: pickGames(schedules[team]) };
+      return { team: team, games: teamGames(schedules[team], Date.now()) };
     });
     var team = chooseTeam(entries, nearStart, heldGame());
     localStorage.setItem('shownTeam', team);

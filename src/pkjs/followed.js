@@ -1,5 +1,7 @@
 // Choosing which of the followed teams the face shows.
 
+var nextOrDelayed = require('./schedule').nextOrDelayed;
+
 function startOf(game) {
   return Date.parse(game.startTimeUTC);
 }
@@ -17,19 +19,24 @@ function byStart(entries, gameOf, latest) {
   return best;
 }
 
-// Picks from entries, in the user's team order, each { team, picked } with picked from
-// pickGames. A just-ended game whose final is being held, heldId, comes first. Then a
+// A suspended game stays up like a recent final.
+function ended(e) {
+  return e.games.recentFinal || e.games.suspended;
+}
+
+// Picks from entries, in the user's team order, each { team, games } with games from
+// teamGames. A just-ended game whose final is being held, heldId, comes first. Then a
 // live game, the one that started first so an overlapping game waits its turn. Then a
-// game about to start (nearStart says so), then the last game to finish, whose final
-// stays up for a while, then the next game on the schedule. With nothing at all to
-// show, team 1.
+// game about to start (nearStart says so), then the last game to end, whose final
+// stays up for a while, then the delayed or next game. With nothing at all to show,
+// team 1.
 function chooseTeam(entries, nearStart, heldId) {
-  var held = heldId && entries.filter(function(e) { return e.picked.recent && e.picked.recent.id === heldId; })[0];
+  var held = heldId && entries.filter(function(e) { return ended(e) && ended(e).id === heldId; })[0];
   var shown = held ||
-              byStart(entries, function(e) { return e.picked.live; }) ||
-              byStart(entries, function(e) { return nearStart(e.picked.next) && e.picked.next; }) ||
-              byStart(entries, function(e) { return e.picked.recent; }, true) ||
-              byStart(entries, function(e) { return e.picked.next; }) ||
+              byStart(entries, function(e) { return e.games.live; }) ||
+              byStart(entries, function(e) { var g = nextOrDelayed(e.games); return nearStart(g) && g; }) ||
+              byStart(entries, ended, true) ||
+              byStart(entries, function(e) { return nextOrDelayed(e.games); }) ||
               entries[0];
   return shown.team;
 }
