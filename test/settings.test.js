@@ -15,7 +15,8 @@ test('before the settings page is ever saved', function() {
     bannerSecs: 30,
     vibeOnPeriod: false,
     vibeOnFinal: false,
-    vibeOnDisconnect: false
+    vibeOnDisconnect: false,
+    pinsOn: true
   });
 });
 
@@ -48,6 +49,7 @@ test('saved settings page answers read back', function() {
   values[keys.ConfigVibeOnPeriod] = true;
   values[keys.ConfigVibeOnFinal] = true;
   values[keys.VibeOnDisconnect] = true;
+  values[keys.ConfigPinNext] = false;
   var ls = fakeLocalStorage();
   settings.saveFromConfig(ls, values);
   var s = settings.read(ls);
@@ -62,4 +64,5 @@ test('saved settings page answers read back', function() {
   assert.strictEqual(s.vibeOnPeriod, true);
   assert.strictEqual(s.vibeOnFinal, true);
   assert.strictEqual(s.vibeOnDisconnect, true);
+  assert.strictEqual(s.pinsOn, false);
 });

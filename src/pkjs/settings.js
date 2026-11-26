@@ -30,6 +30,7 @@ function followedTeams(localStorage) {
 //   goalVibe: which goals to buzz for, 'off', 'mine' or 'both'.
 //   goalBanner: whether to show the goal banner; bannerSecs, for how long.
 //   vibeOnPeriod, vibeOnFinal, vibeOnDisconnect: off unless turned on.
+//   pinsOn: whether to pin games to the timeline, on unless turned off.
 function read(localStorage) {
   var classics = {};
   Object.keys(teams).forEach(function(abbr) {
@@ -47,7 +48,8 @@ function read(localStorage) {
     bannerSecs: parseInt(localStorage.getItem('bannerSecs'), 10) || BANNER_SECS,
     vibeOnPeriod: localStorage.getItem('vibeOnPeriod') === '1',
     vibeOnFinal: localStorage.getItem('vibeOnFinal') === '1',
-    vibeOnDisconnect: localStorage.getItem('vibeOnDisconnect') === '1'
+    vibeOnDisconnect: localStorage.getItem('vibeOnDisconnect') === '1',
+    pinsOn: localStorage.getItem('pinNext') !== '0'
   };
 }
 
@@ -70,6 +72,7 @@ function saveFromConfig(localStorage, values) {
   localStorage.setItem('vibeOnPeriod', values[keys.ConfigVibeOnPeriod] ? '1' : '0');
   localStorage.setItem('vibeOnFinal', values[keys.ConfigVibeOnFinal] ? '1' : '0');
   localStorage.setItem('vibeOnDisconnect', values[keys.VibeOnDisconnect] ? '1' : '0');
+  localStorage.setItem('pinNext', values[keys.ConfigPinNext] ? '1' : '0');
 }
 
 module.exports = { read: read, saveFromConfig: saveFromConfig };

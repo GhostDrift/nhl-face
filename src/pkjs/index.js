@@ -3,6 +3,7 @@ var clayConfig = require('./config');
 var chooseTeam = require('./followed').chooseTeam;
 var settings = require('./settings');
 var timeline = require('./timeline');
+var pins = timeline.createPins({ timeline: timeline.rebbleTimeline(), localStorage: localStorage });
 var teamGames = require('./schedule').teamGames;
 var nextOrDelayed = require('./schedule').nextOrDelayed;
 var awayToday = require('./schedule').awayToday;
@@ -313,9 +314,7 @@ function update() {
     var entries = followed.map(function(team) {
       return { team: team, games: teamGames(schedules[team], Date.now()) };
     });
-    var pinsOn = localStorage.getItem('pinNext') !== '0';
-    timeline.pinFinals(entries.map(function(e) { return e.games.recentFinal; }), pinsOn);
-    timeline.pinUpcoming(followed.map(function(team) { return schedules[team].games; }), teamRecords(standings), pinsOn);
+    pins.sync(schedules, teamRecords(standings), getSettings().pinsOn, Date.now());
     var team = chooseTeam(entries, nearStart, heldGame());
     localStorage.setItem('shownTeam', team);
     showTeam(team, schedules[team], standings, entries.filter(function(e) { return e.team !== team; }));
@@ -347,8 +346,6 @@ Pebble.addEventListener('showConfiguration', function() {
 
 Pebble.addEventListener('webviewclosed', function(e) {
   if (!e || !e.response) return;
-  var values = clay.getSettings(e.response);
-  settings.saveFromConfig(localStorage, values);
-  localStorage.setItem('pinNext', values[keys.ConfigPinNext] ? '1' : '0');
+  settings.saveFromConfig(localStorage, clay.getSettings(e.response));
   update();
 });
