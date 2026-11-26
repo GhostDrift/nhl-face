@@ -78,8 +78,8 @@ module.exports = [
       {
         type: 'toggle',
         messageKey: 'ConfigPinNext',
-        label: 'Pin next games to the timeline',
-        description: 'Each of your teams\' next game shows on the timeline at puck drop, however many days away. Final scores are always pinned when games end.',
+        label: 'Pin games to the timeline',
+        description: 'Each of your teams\' next game at puck drop, replaced by the final score when it ends.',
         defaultValue: true
       },
       {

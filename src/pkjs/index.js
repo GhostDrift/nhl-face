@@ -678,9 +678,9 @@ function update() {
     var entries = followed.map(function(team) {
       return { team: team, picked: pickGames(schedules[team]) };
     });
-    pinFinals(entries.map(function(e) { return e.picked.recent; }));
-    pinUpcoming(followed.map(function(team) { return schedules[team].games; }), teamRecords(standings),
-                localStorage.getItem('pinNext') !== '0');
+    var pinsOn = localStorage.getItem('pinNext') !== '0';
+    pinFinals(entries.map(function(e) { return e.picked.recent; }), pinsOn);
+    pinUpcoming(followed.map(function(team) { return schedules[team].games; }), teamRecords(standings), pinsOn);
     var team = chooseTeam(entries, nearStart, heldGame());
     localStorage.setItem('shownTeam', team);
     showTeam(team, schedules[team], standings, entries.filter(function(e) { return e.team !== team; }));

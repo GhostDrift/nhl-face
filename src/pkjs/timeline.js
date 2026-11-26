@@ -1,6 +1,9 @@
-// The watch's timeline: each followed team's next game pinned at puck drop, and final scores
-// pinned when each game ends, so a result bumped off the face can still be found by
-// scrolling back.
+// The watch's timeline: each followed team's next game pinned at puck drop as an
+// upcoming pin, replaced by a final pin with the score when the game ends, so a result
+// bumped off the face can still be found by scrolling back. See GLOSSARY.md.
+//
+// Pins are only removed when a final pin replaces an upcoming one, when a team stops
+// being followed, or when pins are turned off in settings.
 
 var PIN_API = 'https://timeline-api.rebble.io/v1/user/pins/';
 var ICON = 'system://images/HOCKEY_GAME';
@@ -13,12 +16,30 @@ var PINNED_MAX = 30;
 // goes at a typical game's length instead.
 var LATE_FINAL_MS = 4 * 60 * 60 * 1000;
 var TYPICAL_GAME_MS = (2 * 60 + 40) * 60 * 1000;
-// Upcoming game pins are forgotten this long after puck drop. They stay on the
-// timeline; this only keeps the list of them short.
+// Upcoming pins are forgotten this long after puck drop once there's nothing left to
+// update on them. They stay on the timeline; this only keeps the list of them short.
 var UPCOMING_KEEP_MS = 24 * 60 * 60 * 1000;
+// A game called off, by its schedule state, and what its upcoming pin says.
+var CALLED_OFF = { PPD: 'POSTPONED', SUSP: 'SUSPENDED', CNCL: 'CANCELLED' };
 
 function load(key, empty) {
   try { return JSON.parse(localStorage.getItem(key)) || empty; } catch (e) { return empty; }
+}
+
+function save(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function notStarted(game) {
+  return game.gameState === 'FUT' || game.gameState === 'PRE';
+}
+
+function isDone(game) {
+  return game.gameState === 'FINAL' || game.gameState === 'OFF';
+}
+
+function calledOff(game) {
+  return CALLED_OFF[game.gameScheduleState] || null;
 }
 
 // Calls back with the timeline token, or logs why there isn't one.
@@ -30,10 +51,12 @@ function withToken(callback) {
 }
 
 // PUTs pin, or with pin null DELETEs the pin with id, then calls back with any error.
+// Deleting a pin that's already gone counts as success.
 function send(token, id, pin, callback) {
   var xhr = new XMLHttpRequest();
   xhr.onload = function() {
-    callback(xhr.status >= 200 && xhr.status < 300 ? null : new Error('Pin HTTP ' + xhr.status + ' for ' + id + ': ' + xhr.responseText));
+    var ok = (xhr.status >= 200 && xhr.status < 300) || (!pin && xhr.status === 404);
+    callback(ok ? null : new Error('Pin HTTP ' + xhr.status + ' for ' + id + ': ' + xhr.responseText));
   };
   xhr.onerror = function() { callback(new Error('Network error for pin ' + id)); };
   xhr.ontimeout = xhr.onerror;
@@ -44,7 +67,136 @@ function send(token, id, pin, callback) {
   xhr.send(pin ? JSON.stringify(pin) : null);
 }
 
-// Final scores
+// Upcoming pins, kept in localStorage as game id: { start, sent, off }, sent being the
+// pin as last PUT, so each change is sent once, and off whether the game was called off.
+
+function upcomingId(id) {
+  return 'nhl-game-' + id;
+}
+
+function loadUpcoming() {
+  var pinned = load('pinnedUpcoming', {});
+  // Before pins were tracked whole, each was kept as just its start time.
+  Object.keys(pinned).forEach(function(id) {
+    if (typeof pinned[id] === 'string') pinned[id] = { start: pinned[id], sent: '', off: false };
+  });
+  return pinned;
+}
+
+// Records a sent upcoming pin for game id, or with entry null, that it's gone.
+function saveUpcoming(id, entry) {
+  var pinned = loadUpcoming();
+  if (entry) pinned[id] = entry; else delete pinned[id];
+  save('pinnedUpcoming', pinned);
+}
+
+function deleteUpcoming(token, id) {
+  send(token, upcomingId(id), null, function(err) {
+    if (err) console.log(err.message); else saveUpcoming(id, null);
+  });
+}
+
+// The upcoming pin for game: at puck drop with both teams' records, or for a game
+// called off, saying so, with the score so far for a suspended one.
+function upcomingPin(game, records) {
+  var away = game.awayTeam, home = game.homeTeam;
+  var layout = {
+    type: 'sportsPin',
+    title: away.abbrev + ' @ ' + home.abbrev,
+    tinyIcon: ICON,
+    largeIcon: ICON,
+    nameAway: away.abbrev,
+    nameHome: home.abbrev,
+    sportsGameState: 'pre-game'
+  };
+  if (records[away.abbrev]) layout.recordAway = records[away.abbrev];
+  if (records[home.abbrev]) layout.recordHome = records[home.abbrev];
+  var status = calledOff(game);
+  if (status) layout.subtitle = status;
+  if (status && game.gameScheduleState === 'SUSP') {
+    layout.sportsGameState = 'in-game';
+    layout.scoreAway = String(away.score || 0);
+    layout.scoreHome = String(home.score || 0);
+  }
+  return {
+    id: upcomingId(game.id),
+    time: new Date(Date.parse(game.startTimeUTC)).toISOString(),
+    duration: TYPICAL_GAME_MS / 60000,
+    layout: layout
+  };
+}
+
+// The team's next game, from games, its schedule in order: the first one whose puck
+// drop is still ahead and that hasn't been called off. Null if there isn't one.
+function nextGame(games) {
+  var now = Date.now();
+  return games.filter(function(g) {
+    return notStarted(g) && !calledOff(g) && Date.parse(g.startTimeUTC) > now;
+  })[0] || null;
+}
+
+// An upcoming pin still changes until puck drop, and a called-off game's pin until the
+// game is played.
+function stillChanging(game) {
+  return notStarted(game) || !!calledOff(game);
+}
+
+// Keeps an upcoming pin for each followed team's next game, from schedules, a list of
+// each followed team's games. A game two teams share is pinned once. A game keeps its
+// pin up to date until puck drop, so it moves if the game is rescheduled, says if it's
+// called off, and shows records, from records by team abbreviation, as they change.
+// A delayed puck drop keeps the pin, and the team's following game is pinned too.
+// Pins are removed when the game's final pin is in, when no followed team plays in
+// the game any more, or with on false, for every game not finished.
+function pinUpcoming(schedules, records, on) {
+  var pinned = loadUpcoming();
+  var finals = load('pinnedFinals', []);
+  var now = Date.now();
+  var games = {}, wanted = {};
+  schedules.forEach(function(schedule) {
+    schedule.forEach(function(g) { games[g.id] = g; });
+    var next = on && nextGame(schedule);
+    if (next) wanted[next.id] = true;
+  });
+  if (on) {
+    Object.keys(pinned).forEach(function(id) {
+      if (games[id] && stillChanging(games[id])) wanted[id] = true;
+    });
+  }
+
+  var puts = [];
+  Object.keys(wanted).forEach(function(id) {
+    var pin = upcomingPin(games[id], records);
+    var sent = JSON.stringify(pin);
+    if (!pinned[id] || pinned[id].sent !== sent) puts.push({ id: id, pin: pin, sent: sent });
+  });
+  var deletes = Object.keys(pinned).filter(function(id) {
+    var game = games[id];
+    if (finals.indexOf(Number(id)) >= 0) return true;
+    if (!on) return !game || !isDone(game);
+    // Unfollowed: no followed team's schedule has the game, and it's still to come.
+    return !game && (Date.parse(pinned[id].start) > now || pinned[id].off);
+  });
+  // Forget pins long past with nothing left to change, so the list stays short.
+  Object.keys(pinned).forEach(function(id) {
+    if (wanted[id] || deletes.indexOf(id) >= 0) return;
+    if (now - Date.parse(pinned[id].start) > UPCOMING_KEEP_MS) delete pinned[id];
+  });
+  save('pinnedUpcoming', pinned);
+  if (!puts.length && !deletes.length) return;
+
+  withToken(function(token) {
+    puts.forEach(function(p) {
+      send(token, p.pin.id, p.pin, function(err) {
+        if (err) console.log(err.message);
+        else saveUpcoming(p.id, { start: games[p.id].startTimeUTC, sent: p.sent, off: !!calledOff(games[p.id]) });
+      });
+    });
+    deletes.forEach(function(id) { deleteUpcoming(token, id); });
+  });
+}
+
+// Final pins
 
 function finalEnd(game) {
   var start = Date.parse(game.startTimeUTC);
@@ -73,13 +225,16 @@ function finalPin(game) {
   };
 }
 
-// Pins each finished game in games not pinned yet. Games two followed teams share
-// are pinned once. A pin that fails is tried again on the next update.
-function pinFinals(games) {
+// Pins each finished game in games not pinned yet, then removes its upcoming pin. A
+// game called off isn't finished, even if its state says so. Games two followed
+// teams share are pinned once. A pin that fails is tried again on the next update,
+// and its upcoming pin stays until it's in. Nothing is pinned with on false.
+function pinFinals(games, on) {
+  if (!on) return;
   var pinned = load('pinnedFinals', []);
   var seen = {};
   var todo = games.filter(function(g) {
-    if (!g || seen[g.id] || pinned.indexOf(g.id) >= 0) return false;
+    if (!g || !isDone(g) || calledOff(g) || seen[g.id] || pinned.indexOf(g.id) >= 0) return false;
     seen[g.id] = true;
     return true;
   });
@@ -91,97 +246,8 @@ function pinFinals(games) {
         if (err) { console.log(err.message); return; }
         var ids = load('pinnedFinals', []).filter(function(x) { return x !== game.id; });
         ids.push(game.id);
-        localStorage.setItem('pinnedFinals', JSON.stringify(ids.slice(-PINNED_MAX)));
-      });
-    });
-  });
-}
-
-// Each team's next game
-
-function upcomingId(id) {
-  return 'nhl-game-' + id;
-}
-
-function upcomingPin(game, records) {
-  var away = game.awayTeam.abbrev, home = game.homeTeam.abbrev;
-  var layout = {
-    type: 'sportsPin',
-    title: away + ' @ ' + home,
-    tinyIcon: ICON,
-    largeIcon: ICON,
-    nameAway: away,
-    nameHome: home,
-    sportsGameState: 'pre-game'
-  };
-  if (records[away]) layout.recordAway = records[away];
-  if (records[home]) layout.recordHome = records[home];
-  return {
-    id: upcomingId(game.id),
-    time: new Date(Date.parse(game.startTimeUTC)).toISOString(),
-    duration: TYPICAL_GAME_MS / 60000,
-    layout: layout
-  };
-}
-
-// The first game in games, a team's schedule in order, that hasn't started and
-// isn't cancelled, however far off. Null if there isn't one.
-function nextGame(games) {
-  var now = Date.now();
-  return games.filter(function(g) {
-    return (g.gameState === 'FUT' || g.gameState === 'PRE') && g.gameScheduleState !== 'CNCL' &&
-           Date.parse(g.startTimeUTC) > now;
-  })[0] || null;
-}
-
-// Keeps a pin at puck drop for each followed team's next game, from schedules, a
-// list of each team's games. A game two teams share is pinned once. Once a game
-// starts, the team's following game is pinned. A pin moves if its start time
-// changes, and a pin for a game still to come that isn't anyone's next game any
-// more, such as a cancelled one or one for a team no longer followed, is removed.
-// With on false, every pin for a game not started yet is removed. records maps a team's
-// abbreviation to its record, for the pin. Pinned games are kept in localStorage,
-// as id: start time, so each is sent once.
-function pinUpcoming(schedules, records, on) {
-  var pinned = load('pinnedUpcoming', {});
-  var now = Date.now();
-  var wanted = {}, started = {};
-  schedules.forEach(function(games) {
-    games.forEach(function(g) {
-      if (g.gameState !== 'FUT' && g.gameState !== 'PRE') started[g.id] = true;
-    });
-    var next = on && nextGame(games);
-    if (next) wanted[next.id] = next;
-  });
-  var puts = Object.keys(wanted).filter(function(id) {
-    return pinned[id] !== wanted[id].startTimeUTC;
-  }).map(function(id) { return wanted[id]; });
-  var deletes = Object.keys(pinned).filter(function(id) {
-    // A game that has started keeps its pin, even ahead of its scheduled time.
-    return !wanted[id] && !started[id] && Date.parse(pinned[id]) > now;
-  });
-  // Forget games long started, so the list stays short.
-  Object.keys(pinned).forEach(function(id) {
-    if (now - Date.parse(pinned[id]) > UPCOMING_KEEP_MS) delete pinned[id];
-  });
-  localStorage.setItem('pinnedUpcoming', JSON.stringify(pinned));
-  if (!puts.length && !deletes.length) return;
-
-  function save(id, start) {
-    var cur = load('pinnedUpcoming', {});
-    if (start) cur[id] = start; else delete cur[id];
-    localStorage.setItem('pinnedUpcoming', JSON.stringify(cur));
-  }
-  withToken(function(token) {
-    puts.forEach(function(game) {
-      send(token, upcomingId(game.id), upcomingPin(game, records), function(err) {
-        if (err) console.log(err.message); else save(game.id, game.startTimeUTC);
-      });
-    });
-    deletes.forEach(function(id) {
-      send(token, upcomingId(id), null, function(err) {
-        // Already gone counts as removed.
-        if (err && !/HTTP 404/.test(err.message)) console.log(err.message); else save(id, null);
+        save('pinnedFinals', ids.slice(-PINNED_MAX));
+        if (loadUpcoming()[game.id]) deleteUpcoming(token, game.id);
       });
     });
   });
